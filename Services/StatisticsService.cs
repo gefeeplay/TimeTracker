@@ -1,0 +1,214 @@
+﻿using Dapper;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using TimeTracker.Data;
+using TimeTracker.Models;
+
+namespace TimeTracker.Services;
+
+public class StatisticsService
+{
+    private readonly Database _db;
+
+    public StatisticsService(Database db)
+    {
+        _db = db;
+    }
+
+    // Статистика за день по приложениям
+    public IEnumerable<DailyAppStat> GetStatsByDate(DateTime date)
+    {
+        using var conn = _db.CreateConnection();
+
+        return conn.Query<DailyAppStat>(@"
+        SELECT * FROM DailyAppStats
+        WHERE Date = @date
+        ORDER BY TotalDurationSeconds DESC",
+            new { date = date.ToString("yyyy-MM-dd") });
+    }
+
+    // Сырые данные (если нужно)
+    public IEnumerable<UsageSession> GetSessions(DateTime from, DateTime to)
+    {
+        using var conn = _db.CreateConnection();
+
+        return conn.Query<UsageSession>(@"
+            SELECT * FROM UsageSessions
+            WHERE StartTime >= @from AND EndTime <= @to",
+            new { from, to });
+    }
+
+    // Топ приложений за период
+    public IEnumerable<(string AppName, int TotalSeconds)> GetTopApps(DateTime from, DateTime to)
+    {
+        using var conn = _db.CreateConnection();
+
+        var result = conn.Query(@"
+            SELECT a.DisplayName as AppName,
+                   SUM(u.DurationSeconds) as TotalSeconds
+            FROM UsageSessions u
+            JOIN Applications a ON a.Id = u.ApplicationId
+            WHERE u.StartTime >= @from AND u.EndTime <= @to
+            GROUP BY a.DisplayName
+            ORDER BY TotalSeconds DESC",
+            new { from, to });
+
+        return result.Select(x => ((string)x.AppName, (int)x.TotalSeconds));
+    }
+
+    // Пересчёт агрегированной статистики (очень важно)
+    public void RecalculateDailyStats(DateTime date)
+    {
+        using var conn = _db.CreateConnection();
+
+        conn.Execute(@"
+        INSERT INTO DailyAppStats (ApplicationId, Date, TotalDurationSeconds, SessionsCount, UpdatedAt)
+        SELECT 
+            ApplicationId,
+            DATE(StartTime) as Date,
+            SUM(DurationSeconds),
+            COUNT(*),
+            @now
+        FROM UsageSessions
+        WHERE DATE(StartTime) = @date
+        GROUP BY ApplicationId
+        ON CONFLICT(ApplicationId, Date) DO UPDATE SET
+            TotalDurationSeconds = excluded.TotalDurationSeconds,
+            SessionsCount = excluded.SessionsCount,
+            UpdatedAt = excluded.UpdatedAt;",
+            new
+            {
+                date = date.ToString("yyyy-MM-dd"),
+                now = DateTime.Now.ToString("yyyy-MM-dd")
+            });
+    }
+
+    // Получить общее время за день (в секундах)
+    public int GetTotalTimeForDate(DateTime date)
+    {
+        /*
+        var start = date.Date;
+        var end = start.AddDays(1);
+
+        var startDateOnly = start.ToString("dd-MM-yyyy");
+        var endDateOnly = end.ToString("dd-MM-yyyy");
+
+        var dateOnly = date.ToString("dd-MM-yyyy");
+        */
+        using var conn = _db.CreateConnection();
+
+        //System.Diagnostics.Debug.WriteLine("date: " + date + "\nstart: " + date.ToString("yyyy-MM-dd"));
+
+        return conn.ExecuteScalar<int>(@"
+        SELECT COALESCE(SUM(TotalDurationSeconds), 0)
+        FROM DailyAppStats
+        WHERE Date = @date",
+        new { date = date.ToString("yyyy-MM-dd") });
+    }
+
+    // Получить данные для графика активности за неделю (по дням)
+    public IEnumerable<(DateTime Date, int TotalSeconds)> GetWeeklyActivity() 
+    { 
+        using var conn = _db.CreateConnection(); 
+        var result = conn.Query(@"
+        SELECT Date, SUM(TotalDurationSeconds) as TotalSeconds
+        FROM DailyAppStats 
+        WHERE Date >= @startDate AND Date <= @endDate 
+        GROUP BY Date 
+        ORDER BY Date", 
+        new 
+        { 
+            startDate = DateTime.Today.AddDays(-6).ToString("yyyy-MM-dd"), 
+            endDate = DateTime.Today.ToString("yyyy-MM-dd")
+        });
+        //return result.Select(x => ((DateTime)x.Date, (int)x.TotalSeconds)); }
+         return result.Select(x => ((DateTime)DateTime.Parse(x.Date), (int)x.TotalSeconds));
+    }
+
+    // Получить все категории
+    public IEnumerable<Category> GetCategories()
+    {
+        using var conn = _db.CreateConnection();
+        return conn.Query<Category>("SELECT * FROM Categories ORDER BY Name");
+    }
+
+    // Получить приложения с категориями за период
+    public IEnumerable<(string AppName, string CategoryName, int TotalSeconds)> GetAppsWithCategories(DateTime from, DateTime to)
+    {
+        using var conn = _db.CreateConnection();
+
+        var result = conn.Query(@"
+            SELECT 
+                a.DisplayName as AppName,
+                c.Name as CategoryName,
+                SUM(u.DurationSeconds) as TotalSeconds
+            FROM UsageSessions u
+            JOIN Applications a ON a.Id = u.ApplicationId
+            JOIN Categories c ON c.Id = a.CategoryId
+            WHERE u.StartTime >= @from AND u.EndTime <= @to
+            GROUP BY a.Id, a.DisplayName, c.Name
+            ORDER BY TotalSeconds DESC",
+            new { from, to });
+
+        return result.Select(x => ((string)x.AppName, (string)x.CategoryName, (int)x.TotalSeconds));
+    }
+
+    // Получить статистику по категориям за период
+    public IEnumerable<(string CategoryName, int TotalSeconds, int AppCount)> GetCategoryStats(DateTime from, DateTime to)
+    {
+        using var conn = _db.CreateConnection();
+
+        var result = conn.Query(@"
+            SELECT 
+                c.Name as CategoryName,
+                COALESCE(SUM(u.DurationSeconds), 0) as TotalSeconds,
+                COUNT(DISTINCT a.Id) as AppCount
+            FROM Categories c
+            LEFT JOIN Applications a ON a.CategoryId = c.Id
+            LEFT JOIN UsageSessions u ON u.ApplicationId = a.Id 
+                AND u.StartTime >= @from AND u.EndTime <= @to
+            GROUP BY c.Id, c.Name
+            HAVING TotalSeconds > 0
+            ORDER BY TotalSeconds DESC",
+            new { from, to });
+
+        return result.Select(x => ((string)x.CategoryName, (int)x.TotalSeconds, (int)x.AppCount));
+    }
+
+    // Получить самое частое приложение за период
+    public (string AppName, string CategoryName)? GetMostFrequentApp(DateTime from, DateTime to)
+    {
+        using var conn = _db.CreateConnection();
+
+        var result = conn.QueryFirstOrDefault(@"
+            SELECT 
+                a.DisplayName as AppName,
+                c.Name as CategoryName,
+                SUM(u.DurationSeconds) as TotalSeconds
+            FROM UsageSessions u
+            JOIN Applications a ON a.Id = u.ApplicationId
+            JOIN Categories c ON c.Id = a.CategoryId
+            WHERE u.StartTime >= @from AND u.EndTime <= @to
+            GROUP BY a.Id, a.DisplayName, c.Name
+            ORDER BY TotalSeconds DESC
+            LIMIT 1",
+            new { from, to });
+
+        if (result == null)
+            return null;
+
+        return ((string)result.AppName, (string)result.CategoryName);
+    }
+
+    // Получить количество переключений окон за период
+    public int GetWindowSwitchesCount(DateTime from, DateTime to)
+    {
+        using var conn = _db.CreateConnection();
+
+        return conn.ExecuteScalar<int>(@"
+            SELECT COUNT(*) FROM UsageSessions
+            WHERE StartTime >= @from AND EndTime <= @to",
+            new { from, to });
+    }
+}

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ========================= -->
+    <!-- БАЗОВЫЙ СТИЛЬ TEXTBLOCK -->
+    <!-- ========================= -->
+    <Style x:Key="BaseTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Segoe UI"/>
+        <Setter Property="Foreground" Value="#111827"/>
+    </Style>
+
+
+    <!-- ========================= -->
+    <!-- ЗАГОЛОВКИ -->
+    <!-- ========================= -->
+
+    <!-- Главный заголовок страницы -->
+    <Style x:Key="PageHeaderTextStyle"
+       TargetType="TextBlock"
+       BasedOn="{StaticResource BaseTextStyle}">
+        <Setter Property="FontSize" Value="28"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="#111827"/>
+    </Style>
+
+    <!-- Заголовок блока (18px) -->
+    <Style x:Key="SectionTitleTextStyle"
+       TargetType="TextBlock"
+       BasedOn="{StaticResource BaseTextStyle}">
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
+
+    <!-- ========================= -->
+    <!-- МЕТРИКИ (крупные числа) -->
+    <!-- ========================= -->
+
+    <Style x:Key="MetricLargeTextStyle"
+       TargetType="TextBlock"
+       BasedOn="{StaticResource BaseTextStyle}">
+        <Setter Property="FontSize" Value="24"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="#111827"/>
+    </Style>
+
+    <Style x:Key="MetricMediumTextStyle"
+       TargetType="TextBlock"
+       BasedOn="{StaticResource BaseTextStyle}">
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
+
+    <!-- ========================= -->
+    <!-- ВСПОМОГАТЕЛЬНЫЙ ТЕКСТ -->
+    <!-- ========================= -->
+
+    <!-- Малый серый текст -->
+    <Style x:Key="CaptionTextStyle"
+       TargetType="TextBlock"
+       BasedOn="{StaticResource BaseTextStyle}">
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Foreground" Value="#6B7280"/>
+    </Style>
+
+    <Style x:Key="AppTextStyle"
+   TargetType="TextBlock"
+   BasedOn="{StaticResource BaseTextStyle}">
+        <Setter Property="FontSize" Value="15"/>
+        <Setter Property="Foreground" Value="#111827"/>
+    </Style>
+
+    <!-- ========================= -->
+    <!-- ПОЛОЖИТЕЛЬНОЕ ЗНАЧЕНИЕ -->
+    <!-- ========================= -->
+
+    <Style x:Key="PositiveDeltaTextStyle"
+    TargetType="TextBlock"
+    BasedOn="{StaticResource BaseTextStyle}">
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Foreground" Value="#10B981"/>
+    </Style>
+
+    <!-- ОТРИЦАТЕЛЬНОЕ ЗНАЧЕНИЕ -->
+    <Style x:Key="NegativeDeltaTextStyle"
+    TargetType="TextBlock"
+    BasedOn="{StaticResource BaseTextStyle}">
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Foreground" Value="#DC2626"/>
+    </Style>
+
+</ResourceDictionary>
