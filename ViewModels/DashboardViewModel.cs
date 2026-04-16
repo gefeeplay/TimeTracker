@@ -1,6 +1,8 @@
 ﻿using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Dispatching;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -9,14 +11,19 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using TimeTracker.Models;
-using Microsoft.UI.Xaml;
+using TimeTracker.Monitoring;
+using TimeTracker.Services;
 
 namespace TimeTracker.ViewModels;
 
 public class DashboardViewModel : INotifyPropertyChanged
 {
-    private readonly Services.StatisticsService _statsService;
-    
+    private readonly ActivityTracker _activityTracker;
+    private readonly UsageService _usageService;
+    private readonly StatisticsService _statsService;
+
+    private readonly DispatcherQueue _dispatcher;
+
     private string _totalTodayTitle;
     private string _totalTodayTime;
     private string _totalTodayDelta;
@@ -42,13 +49,8 @@ public class DashboardViewModel : INotifyPropertyChanged
     // Константа дневной цели в секундах (8 часов)
     private const int DAILY_GOAL_SECONDS = 8 * 60 * 60;
 
-    public DashboardViewModel() : this(App.StatisticsService)
+    public DashboardViewModel(ActivityTracker activityTracker, UsageService usageService, StatisticsService statisticsService, DispatcherQueue dispatcher)
     {
-    }
-
-    public DashboardViewModel(Services.StatisticsService statsService)
-    {
-        _statsService = statsService;
 
         // Заголовки
         TotalTodayTitle = "ВСЕГО СЕГОДНЯ";
@@ -58,29 +60,28 @@ public class DashboardViewModel : INotifyPropertyChanged
         DailyGoalTitle = "Дневная цель";
         TipsTitle = "Умные советы";
 
-        Applications = new ObservableCollection<ApplicationUsage>();
-        
-        // Инициализация графиков
-        InitializeCharts();
+        _activityTracker = activityTracker;
+        _usageService = usageService;
+        _dispatcher = dispatcher;
+        _statsService = statisticsService;
 
-        // Загрузка данных
-        //LoadData();
+        _activityTracker.OnStatsUpdated += HandleStatsUpdated;
+
+        LoadData(); // начальная загрузка
     }
 
-    private DispatcherTimer _timer;
-
-    public void StartAutoUpdate()
+    private void HandleStatsUpdated()
     {
-        _timer = new DispatcherTimer();
-        _timer.Interval = TimeSpan.FromSeconds(5);
-
-        _timer.Tick += (s, e) =>
+        //важно: UI поток!
+        _dispatcher.TryEnqueue(() =>
         {
-            App.StatisticsService.RecalculateDailyStats(DateTime.Today);
             LoadData();
-        };
+        });
+    }
 
-        _timer.Start();
+    public void Dispose()
+    {
+        _activityTracker.OnStatsUpdated -= HandleStatsUpdated;
     }
 
     public void Initialize()
@@ -377,7 +378,8 @@ public class DashboardViewModel : INotifyPropertyChanged
         set => SetField(ref _weekActivityTitle, value);
     }
 
-    public ObservableCollection<ApplicationUsage> Applications { get; }
+    public ObservableCollection<ApplicationUsage> Applications { get; set; }
+    = new ObservableCollection<ApplicationUsage>();
 
     public string DailyGoalTitle
     {

@@ -10,15 +10,18 @@ namespace TimeTracker.Monitoring;
 public class ActivityTracker
 {
     private readonly UsageService _usageService;
+    private readonly StatisticsService _statisticsService;
 
     private readonly Timer _timer;
 
     private string _currentProcess = string.Empty;
     private DateTime _sessionStart;
 
-    // 🔧 настройки
+    // настройки
     private const int IntervalMs = 2000;          // частота проверки
     private const int MinSessionSeconds = 2;      // минимальная длительность сессии
+
+    public event Action? OnStatsUpdated;
 
     public ActivityTracker(UsageService usageService)
     {
@@ -54,11 +57,11 @@ public class ActivityTracker
         {
             string activeProcess = GetActiveProcessName();
 
-            // 🔴 игнор пустых значений
+            // игнор пустых значений
             if (string.IsNullOrEmpty(activeProcess))
                 return;
 
-            // 🔴 игнор тех же процессов
+            // игнор тех же процессов
             if (activeProcess == _currentProcess)
                 return;
 
@@ -87,11 +90,11 @@ public class ActivityTracker
             var endTime = DateTime.Now;
             var duration = (int)(endTime - _sessionStart).TotalSeconds;
 
-            // 🔴 игнор коротких сессий
+            // игнор коротких сессий
             if (duration < MinSessionSeconds)
                 return;
 
-            // 🔴 игнор системных процессов (по желанию)
+            // игнор системных процессов (по желанию)
             if (IsIgnoredProcess(_currentProcess))
                 return;
 
@@ -107,6 +110,11 @@ public class ActivityTracker
             };
 
             _usageService.AddSession(session);
+
+            //Обновление есть в UsageSession.AddSession
+            //_statisticsService.RecalculateDailyStats(DateTime.Today);
+
+            OnStatsUpdated?.Invoke(); // уведомляем UI
 
             Debug.WriteLine($"[Tracker] Saved: {_currentProcess} ({duration}s)");
         }
