@@ -18,7 +18,7 @@
   <Properties>
     <DisplayName>TimeTracker</DisplayName>
     <PublisherDisplayName>Михаил</PublisherDisplayName>
-    <Logo>Assets\StoreLogo.png</Logo>
+    <Logo>Assets\MyStoreLogo.png</Logo>
   </Properties>
 
   <Dependencies>
@@ -38,10 +38,16 @@
         DisplayName="TimeTracker"
         Description="TimeTracker"
         BackgroundColor="transparent"
-        Square150x150Logo="Assets\Square150x150Logo.png"
-        Square44x44Logo="Assets\Square44x44Logo.png">
-        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
-        <uap:SplashScreen Image="Assets\SplashScreen.png" />
+        Square150x150Logo="Assets\logo_square.png"
+        Square44x44Logo="Assets\MySquare44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"  Square310x310Logo="Assets\Square310x310.png" Square71x71Logo="Assets\Square71x71.png">
+          <uap:ShowNameOnTiles>
+            <uap:ShowOn Tile="square150x150Logo"/>
+            <uap:ShowOn Tile="square310x310Logo"/>
+          </uap:ShowNameOnTiles>
+        </uap:DefaultTile >
+        <uap:SplashScreen Image="Assets\MySplashScreen.png" />
+        <uap:LockScreen BadgeLogo="Assets\logo_square.png" Notification="badge"/>
       </uap:VisualElements>
     </Application>
   </Applications>
