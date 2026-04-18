@@ -11,14 +11,14 @@ public class CategoriesViewModel : INotifyPropertyChanged
 {
     private readonly Services.StatisticsService _statsService;
 
-    private string _headerTitle;
-    private string _headerSubtitle;
+    private string _headerTitle = "Категории";
+    private string _headerSubtitle = "Обзор использования вашего времени по категориям";
 
-    private CategorySummary _category1Summary;
-    private CategorySummary _category2Summary;
+    private CategorySummary _category1Summary = new CategorySummary("Нет данных", "0м", "Нет данных", "0%");
+    private CategorySummary _category2Summary = new CategorySummary("Нет данных", "0м", "Нет данных", "0%");
 
-    private string _tipTitle;
-    private string _tipText;
+    private string _tipTitle = "Совет по продуктивности";
+    private string _tipText = "";
 
     // Выбранный период: 0 = сегодня, 1 = неделя, 2 = месяц
     private int _selectedPeriod;
@@ -41,10 +41,6 @@ public class CategoriesViewModel : INotifyPropertyChanged
     public CategoriesViewModel(Services.StatisticsService statsService)
     {
         _statsService = statsService;
-
-        HeaderTitle = "Категории";
-        HeaderSubtitle = "Обзор использования вашего времени по категориям";
-        TipTitle = "Совет по продуктивности";
 
         WorkApplications = new ObservableCollection<CategoryApplicationUsage>();
         EntertainmentApplications = new ObservableCollection<CategoryApplicationUsage>();
@@ -227,14 +223,14 @@ public class CategoriesViewModel : INotifyPropertyChanged
         set => SetField(ref _tipText, value);
     }
 
-    public event PropertyChangedEventHandler PropertyChanged;
+    public event PropertyChangedEventHandler? PropertyChanged;
 
-    protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-    protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+    protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
         if (Equals(field, value))
         {

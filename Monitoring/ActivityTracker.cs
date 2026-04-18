@@ -10,7 +10,7 @@ namespace TimeTracker.Monitoring;
 public class ActivityTracker
 {
     private readonly UsageService _usageService;
-    private readonly StatisticsService _statisticsService;
+    //private readonly StatisticsService _statisticsService;
 
     private readonly Timer _timer;
 

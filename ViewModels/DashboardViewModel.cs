@@ -24,41 +24,37 @@ public class DashboardViewModel : INotifyPropertyChanged
 
     private readonly DispatcherQueue _dispatcher;
 
-    private string _totalTodayTitle;
-    private string _totalTodayTime;
-    private string _totalTodayDelta;
+    private const string NO_DATA = "Нет данных";
 
-    private string _mostFrequentTitle;
-    private string _mostFrequentCategory;
-    private string _mostFrequentDescription;
+    private string _totalTodayTitle = "ВСЕГО СЕГОДНЯ";
+    private string _totalTodayTime = "0м";
+    private string _totalTodayDelta = NO_DATA;
 
-    private string _windowSwitchesTitle;
-    private string _windowSwitchesCount;
-    private string _windowSwitchesDescription;
+    private string _mostFrequentTitle = "САМОЕ ЧАСТОЕ";
+    private string _mostFrequentCategory = NO_DATA;
+    private string _mostFrequentDescription = "Начните использовать приложение";
 
-    private string _weekActivityTitle;
+    private string _windowSwitchesTitle = "СМЕНА ОКОН";
+    private string _windowSwitchesCount = "0";
+    private string _windowSwitchesDescription = NO_DATA;
 
-    private string _dailyGoalTitle;
-    private string _dailyGoalDescription;
-    private string _dailyGoalPercent;
-    private double _dailyGoalPercentValue;
+    private string _weekActivityTitle = "Активность за неделю";
+    //private ISeries[] _weekActivitySeries = Array.Empty<ISeries>();
+    //private Axis[] _weekActivityXAxes = Array.Empty<Axis>();
 
-    private string _tipsTitle;
-    private string _tipsText;
+    private string _dailyGoalTitle = "Дневная цель";
+    private string _dailyGoalDescription = NO_DATA;
+    private string _dailyGoalPercent = "0%";
+    private double _dailyGoalPercentValue = 0;
+
+    private string _tipsTitle = "Умные советы";
+    private string _tipsText = "Начните отслеживать активность";
 
     // Константа дневной цели в секундах (8 часов)
     private const int DAILY_GOAL_SECONDS = 8 * 60 * 60;
 
     public DashboardViewModel(ActivityTracker activityTracker, UsageService usageService, StatisticsService statisticsService, DispatcherQueue dispatcher)
     {
-
-        // Заголовки
-        TotalTodayTitle = "ВСЕГО СЕГОДНЯ";
-        MostFrequentTitle = "САМОЕ ЧАСТОЕ";
-        WindowSwitchesTitle = "СМЕНА ОКОН";
-        WeekActivityTitle = "Активность за неделю";
-        DailyGoalTitle = "Дневная цель";
-        TipsTitle = "Умные советы";
 
         _activityTracker = activityTracker;
         _usageService = usageService;
@@ -67,7 +63,10 @@ public class DashboardViewModel : INotifyPropertyChanged
 
         _activityTracker.OnStatsUpdated += HandleStatsUpdated;
 
-        LoadData(); // начальная загрузка
+        WeekActivitySeries = Array.Empty<ISeries>();
+        WeekActivityXAxes = Array.Empty<Axis>();
+
+        LoadData(); // начальная загрузка    
     }
 
     private void HandleStatsUpdated()
@@ -417,14 +416,14 @@ public class DashboardViewModel : INotifyPropertyChanged
         set => SetField(ref _tipsText, value);
     }
 
-    public event PropertyChangedEventHandler PropertyChanged;
+    public event PropertyChangedEventHandler? PropertyChanged;
 
-    protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-    protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+    protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
         if (Equals(field, value))
         {

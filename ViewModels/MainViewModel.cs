@@ -10,7 +10,7 @@ namespace TimeTracker.ViewModels
     {
         private readonly Frame _frame;
 
-        private string _currentPage;
+        private string _currentPage = "DashboardPage";
         public string CurrentPage
         {
             get => _currentPage;
@@ -30,15 +30,13 @@ namespace TimeTracker.ViewModels
         {
             _frame = frame;
 
-            CurrentPage = "DashboardPage";
-
             NavigateCommand = new RelayCommand(parameter =>
             {
                 var pageName = parameter as string;
                 if (string.IsNullOrWhiteSpace(pageName))
                     return;
 
-                Type pageType = pageName switch
+                Type? pageType = pageName switch
                 {
                     "DashboardPage" => typeof(Views.DashboardPage),
                     "CategoriesPage" => typeof(Views.CategoriesPage),
@@ -48,7 +46,7 @@ namespace TimeTracker.ViewModels
                 if (pageType is not null)
                 {
                     _frame.Navigate(pageType);
-                    CurrentPage = pageName; // ← ключевой момент
+                    CurrentPage = pageName; 
                 }
             });
         }
