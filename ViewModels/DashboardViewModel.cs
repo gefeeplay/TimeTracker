@@ -16,7 +16,7 @@ using TimeTracker.Services;
 
 namespace TimeTracker.ViewModels;
 
-public class DashboardViewModel : INotifyPropertyChanged
+public partial class DashboardViewModel : INotifyPropertyChanged
 {
     private readonly ActivityTracker _activityTracker;
     private readonly UsageService _usageService;
@@ -101,7 +101,7 @@ public class DashboardViewModel : INotifyPropertyChanged
         LoadData();
     }
 
-    private void InitializeCharts()
+    /*private void InitializeCharts()
     {
         // Инициализация пустых данных для графика
         WeekActivitySeries = new ISeries[]
@@ -128,7 +128,7 @@ public class DashboardViewModel : INotifyPropertyChanged
                 SeparatorsPaint = new SolidColorPaint(SKColor.Parse("#E5E7EB")) { StrokeThickness = 1 }
             }
         };
-    }
+    }*/
 
     private void LoadData()
     {

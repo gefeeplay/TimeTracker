@@ -44,7 +44,7 @@ public class StatisticsService
     {
         using var conn = _db.CreateConnection();
 
-        var result = conn.Query(@"
+        var result = conn.Query<AppUsageDto>(@"
             SELECT a.DisplayName as AppName,
                    SUM(u.DurationSeconds) as TotalSeconds
             FROM UsageSessions u
@@ -54,7 +54,7 @@ public class StatisticsService
             ORDER BY TotalSeconds DESC",
             new { from, to });
 
-        return result.Select(x => ((string)x.AppName, (int)x.TotalSeconds));
+        return result.Select(x => (x.AppName, x.TotalSeconds));
     }
 
     // Пересчёт агрегированной статистики (очень важно)
@@ -111,7 +111,7 @@ public class StatisticsService
     public IEnumerable<(DateTime Date, int TotalSeconds)> GetWeeklyActivity() 
     { 
         using var conn = _db.CreateConnection(); 
-        var result = conn.Query(@"
+        var result = conn.Query<DailyActivityDto>(@"
         SELECT Date, SUM(TotalDurationSeconds) as TotalSeconds
         FROM DailyAppStats 
         WHERE Date >= @startDate AND Date <= @endDate 
@@ -123,7 +123,7 @@ public class StatisticsService
             endDate = DateTime.Today.ToString("yyyy-MM-dd")
         });
         //return result.Select(x => ((DateTime)x.Date, (int)x.TotalSeconds)); }
-         return result.Select(x => ((DateTime)DateTime.Parse(x.Date), (int)x.TotalSeconds));
+         return result.Select(x => (DateTime.Parse(x.Date), x.TotalSeconds));
     }
 
     // Получить все категории
@@ -138,7 +138,7 @@ public class StatisticsService
     {
         using var conn = _db.CreateConnection();
 
-        var result = conn.Query(@"
+        var result = conn.Query<AppWithCategoryDto>(@"
             SELECT 
                 a.DisplayName as AppName,
                 c.Name as CategoryName,
@@ -151,7 +151,7 @@ public class StatisticsService
             ORDER BY TotalSeconds DESC",
             new { from, to });
 
-        return result.Select(x => ((string)x.AppName, (string)x.CategoryName, (int)x.TotalSeconds));
+        return result.Select(x => (x.AppName, x.CategoryName, x.TotalSeconds));
     }
 
     // Получить статистику по категориям за период
@@ -159,7 +159,7 @@ public class StatisticsService
     {
         using var conn = _db.CreateConnection();
 
-        var result = conn.Query(@"
+        var result = conn.Query<CategoryStatDto>(@"
             SELECT 
                 c.Name as CategoryName,
                 COALESCE(SUM(u.DurationSeconds), 0) as TotalSeconds,
@@ -173,7 +173,7 @@ public class StatisticsService
             ORDER BY TotalSeconds DESC",
             new { from, to });
 
-        return result.Select(x => ((string)x.CategoryName, (int)x.TotalSeconds, (int)x.AppCount));
+        return result.Select(x => (x.CategoryName, x.TotalSeconds, x.AppCount));
     }
 
     // Получить самое частое приложение за период
@@ -181,7 +181,7 @@ public class StatisticsService
     {
         using var conn = _db.CreateConnection();
 
-        var result = conn.QueryFirstOrDefault(@"
+        var result = conn.QueryFirstOrDefault<AppWithCategoryDto>(@"
             SELECT 
                 a.DisplayName as AppName,
                 c.Name as CategoryName,
@@ -198,7 +198,7 @@ public class StatisticsService
         if (result == null)
             return null;
 
-        return ((string)result.AppName, (string)result.CategoryName);
+        return (result.AppName, result.CategoryName);
     }
 
     // Получить количество переключений окон за период
