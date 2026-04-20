@@ -52,6 +52,7 @@ public static class DbInitializer
             CategoryId INTEGER NOT NULL,
             IsActive INTEGER NOT NULL,
             CreatedAt DATETIME NOT NULL,
+            IconPath TEXT,
             FOREIGN KEY (CategoryId) REFERENCES Categories(Id)
         );
 

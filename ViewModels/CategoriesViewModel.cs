@@ -109,7 +109,8 @@ public class CategoriesViewModel : INotifyPropertyChanged
             var usage = new CategoryApplicationUsage(
                 app.AppName,
                 app.CategoryName,
-                FormatTime(app.TotalSeconds));
+                FormatTime(app.TotalSeconds),
+                app.IconPath);
 
             // Рабочие категории
             if (app.CategoryName == "Работа" || app.CategoryName == "Обучение")
@@ -245,5 +246,5 @@ public class CategoriesViewModel : INotifyPropertyChanged
 
 public record CategorySummary(string Name, string TimeText, string DeltaText, string PercentText);
 
-public record CategoryApplicationUsage(string Name, string Category, string TimeText);
+public record CategoryApplicationUsage(string Name, string Category, string TimeText, string? IconPath);
 

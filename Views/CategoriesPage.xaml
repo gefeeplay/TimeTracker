@@ -251,7 +251,11 @@
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
 
-                                            <Border Grid.Column="0" Width="32" Height="32" Background="#A4C5EA" CornerRadius="8" Margin="0,0,10,0"/>
+                                            <Border Grid.Column="0" Width="32" Height="32" CornerRadius="8" Margin="0,0,10,0">
+                                                <Image Width="32"
+                                                       Height="32"
+                                                       Source="{Binding IconPath}" />
+                                            </Border>
 
                                             <StackPanel Grid.Column="1">
                                                 <TextBlock Text="{x:Bind Name}"

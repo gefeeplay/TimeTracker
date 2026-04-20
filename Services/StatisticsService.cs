@@ -134,7 +134,7 @@ public class StatisticsService
     }
 
     // Получить приложения с категориями за период
-    public IEnumerable<(string AppName, string CategoryName, int TotalSeconds)> GetAppsWithCategories(DateTime from, DateTime to)
+    public IEnumerable<(string AppName, string CategoryName, int TotalSeconds, string? IconPath)> GetAppsWithCategories(DateTime from, DateTime to)
     {
         using var conn = _db.CreateConnection();
 
@@ -142,7 +142,8 @@ public class StatisticsService
             SELECT 
                 a.DisplayName as AppName,
                 c.Name as CategoryName,
-                SUM(u.DurationSeconds) as TotalSeconds
+                SUM(u.DurationSeconds) as TotalSeconds,
+                a.IconPath
             FROM UsageSessions u
             JOIN Applications a ON a.Id = u.ApplicationId
             JOIN Categories c ON c.Id = a.CategoryId
@@ -151,7 +152,7 @@ public class StatisticsService
             ORDER BY TotalSeconds DESC",
             new { from, to });
 
-        return result.Select(x => (x.AppName, x.CategoryName, x.TotalSeconds));
+        return result.Select(x => (x.AppName, x.CategoryName, x.TotalSeconds, x.IconPath));
     }
 
     // Получить статистику по категориям за период

@@ -1,7 +1,11 @@
 ﻿using Dapper;
+using Microsoft.UI.Xaml.Media.Imaging;
 using System;
+using System.IO;
 using TimeTracker.Data;
 using TimeTracker.Models;
+using TimeTracker.Services;
+using Windows.Graphics.Imaging;
 
 namespace TimeTracker.Services;
 
@@ -47,7 +51,7 @@ public class UsageService
         transaction.Commit();
     }
 
-    public int GetOrCreateApplication(string processName)
+    public int GetOrCreateApplication(string processName, string? exePath)
     {
         using var conn = _db.CreateConnection();
 
@@ -57,17 +61,26 @@ public class UsageService
 
         if (app != null)
             return app.Id;
+        
+        // НОВОЕ ПРИЛОЖЕНИЕ → получаем иконку
+        string? iconPath = null;
+
+        if (!string.IsNullOrEmpty(exePath))
+        {
+            iconPath = IconHelper.SaveIconToFile(exePath, processName);
+        }
 
         int newId = conn.ExecuteScalar<int>(@"
             INSERT INTO Applications 
-            (ProcessName, DisplayName, CategoryId, IsActive, CreatedAt)
-            VALUES (@ProcessName, @DisplayName, 1, 1, @CreatedAt);
+            (ProcessName, DisplayName, CategoryId, IsActive, CreatedAt, IconPath)
+            VALUES (@ProcessName, @DisplayName, 1, 1, @CreatedAt, @IconPath);
             SELECT last_insert_rowid();",
             new
             {
                 ProcessName = processName,
                 DisplayName = processName,
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.Now,
+                IconPath = iconPath
             });
 
         return newId;

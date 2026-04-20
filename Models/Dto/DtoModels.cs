@@ -13,6 +13,7 @@ public class AppWithCategoryDto
     public string AppName { get; set; } = "";
     public string CategoryName { get; set; } = "";
     public int TotalSeconds { get; set; }
+    public string? IconPath { get; set; }
 }
 
 // Статистика категорий

@@ -15,6 +15,7 @@ public class ActivityTracker
     private readonly Timer _timer;
 
     private string _currentProcess = string.Empty;
+    private string _iconPath = string.Empty;
     private DateTime _sessionStart;
 
     // настройки
@@ -34,7 +35,11 @@ public class ActivityTracker
 
     public void Start()
     {
-        _currentProcess = GetActiveProcessName();
+        var (name, path) = GetActiveProcessName();
+
+        _currentProcess = name;
+        _iconPath = path ?? string.Empty;
+
         _sessionStart = DateTime.Now;
 
         Debug.WriteLine($"[Tracker] Start: {_currentProcess}");
@@ -55,7 +60,7 @@ public class ActivityTracker
     {
         try
         {
-            string activeProcess = GetActiveProcessName();
+            var (activeProcess, exePath) = GetActiveProcessName();
 
             // игнор пустых значений
             if (string.IsNullOrEmpty(activeProcess))
@@ -72,6 +77,7 @@ public class ActivityTracker
 
             // начать новую
             _currentProcess = activeProcess;
+            _iconPath = exePath ?? string.Empty;
             _sessionStart = DateTime.Now;
         }
         catch (Exception ex)
@@ -98,7 +104,10 @@ public class ActivityTracker
             if (IsIgnoredProcess(_currentProcess))
                 return;
 
-            int appId = _usageService.GetOrCreateApplication(_currentProcess);
+            int appId = _usageService.GetOrCreateApplication(
+                _currentProcess,
+                string.IsNullOrEmpty(_iconPath) ? null : _iconPath
+            );
 
             var session = new UsageSession
             {
@@ -124,18 +133,12 @@ public class ActivityTracker
         }
     }
 
-    private int GetOrCreateApplication(string processName)
-    {
-        // Упрощённый вариант — делаем через UsageService
-        return _usageService.GetOrCreateApplication(processName);
-    }
-
-    private string GetActiveProcessName()
+    private (string Name, string? Path) GetActiveProcessName()
     {
         IntPtr hwnd = GetForegroundWindow();
 
         if (hwnd == IntPtr.Zero)
-            return string.Empty;
+            return (string.Empty, null);
 
         GetWindowThreadProcessId(hwnd, out uint pid);
 
@@ -143,11 +146,11 @@ public class ActivityTracker
         {
             var process = Process.GetProcessById((int)pid);
 
-            return process.ProcessName;
+            return (process.ProcessName, process.MainModule?.FileName);
         }
         catch
         {
-            return string.Empty;
+            return (string.Empty, null);
         }
     }
 

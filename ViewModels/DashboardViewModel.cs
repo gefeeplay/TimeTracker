@@ -39,8 +39,6 @@ public partial class DashboardViewModel : INotifyPropertyChanged
     private string _windowSwitchesDescription = NO_DATA;
 
     private string _weekActivityTitle = "Активность за неделю";
-    //private ISeries[] _weekActivitySeries = Array.Empty<ISeries>();
-    //private Axis[] _weekActivityXAxes = Array.Empty<Axis>();
 
     private string _dailyGoalTitle = "Дневная цель";
     private string _dailyGoalDescription = NO_DATA;
@@ -50,8 +48,8 @@ public partial class DashboardViewModel : INotifyPropertyChanged
     private string _tipsTitle = "Умные советы";
     private string _tipsText = "Начните отслеживать активность";
 
-    // Константа дневной цели в секундах (8 часов)
-    private const int DAILY_GOAL_SECONDS = 8 * 60 * 60;
+    // Константа дневной цели в секундах (4 часов)
+    private const int DAILY_GOAL_SECONDS = 4 * 60 * 60;
 
     public DashboardViewModel(ActivityTracker activityTracker, UsageService usageService, StatisticsService statisticsService, DispatcherQueue dispatcher)
     {
@@ -100,35 +98,6 @@ public partial class DashboardViewModel : INotifyPropertyChanged
 
         LoadData();
     }
-
-    /*private void InitializeCharts()
-    {
-        // Инициализация пустых данных для графика
-        WeekActivitySeries = new ISeries[]
-        {
-            new LineSeries<int>
-            {
-                Values = new List<int>(),
-                Fill = new SolidColorPaint(SKColor.Parse("#E3F2FD")),
-                Stroke = new SolidColorPaint(SKColor.Parse("#2196F3")) { StrokeThickness = 3 },
-                GeometryFill = new SolidColorPaint(SKColor.Parse("#2196F3")),
-                GeometryStroke = new SolidColorPaint(SKColor.Parse("#2196F3")) { StrokeThickness = 2 },
-                GeometrySize = 10,
-                LineSmoothness = 0.3
-            }
-        };
-
-        WeekActivityXAxes = new Axis[]
-        {
-            new Axis
-            {
-                Labels = new List<string>(),
-                LabelsRotation = 0,
-                LabelsPaint = new SolidColorPaint(SKColor.Parse("#6B7280")),
-                SeparatorsPaint = new SolidColorPaint(SKColor.Parse("#E5E7EB")) { StrokeThickness = 1 }
-            }
-        };
-    }*/
 
     private void LoadData()
     {
@@ -252,7 +221,7 @@ public partial class DashboardViewModel : INotifyPropertyChanged
                 app.AppName,
                 app.CategoryName,
                 FormatTime(app.TotalSeconds),
-                "" // Delta пока не вычисляем
+                app.IconPath
             ));
         }
 
@@ -436,4 +405,4 @@ public partial class DashboardViewModel : INotifyPropertyChanged
     }
 }
 
-public record ApplicationUsage(string Name, string Category, string TimeText, string DeltaText);
+public record ApplicationUsage(string Name, string Category, string TimeText, string? IconPath);
