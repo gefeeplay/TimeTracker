@@ -14,6 +14,7 @@
                 <ResourceDictionary Source="ms-appx:///Styles/TextStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <converters:PageToStyleConverter x:Key="PageToStyleConverter"/>
+            <converters:ZeroToCollapsedConverter x:Key="ZeroToCollapsedConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
