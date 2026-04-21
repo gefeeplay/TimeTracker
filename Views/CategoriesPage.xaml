@@ -65,215 +65,142 @@
                         Spacing="30">
 
                 <!-- TOP CATEGORY CARDS -->
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="30" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+                <ListView ItemsSource="{Binding Categories}"
+                          SelectionMode="None"
+                          IsItemClickEnabled="False"
+                          Background="Transparent"
+                          BorderThickness="0"
+                          HorizontalAlignment="Stretch"
+                          HorizontalContentAlignment="Stretch"
+                          Padding="20">
+                    <ListView.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <ItemsWrapGrid Orientation="Horizontal"
+                                           MaximumRowsOrColumns="2"
+                                           ItemWidth="500"
+                                           HorizontalAlignment="Stretch"
+                                           ItemHeight="550"/>
+                        </ItemsPanelTemplate>
+                    </ListView.ItemsPanel>
 
-                    <!-- Work -->
-                    <Border Grid.Column="0"
-                            Background="White"
-                            CornerRadius="16"
-                            Padding="24"
-                            BorderBrush="#E5E5E5"
-                            BorderThickness="1">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="viewModels:CategoryBlock">
 
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="{Binding WorkSummary.Name}"
-                                           FontSize="20"
-                                           FontWeight="SemiBold"
-                                           Foreground="#111827" />
-                                <TextBlock Text="{Binding WorkSummary.TimeText}"
-                                           FontSize="26"
-                                           FontWeight="SemiBold"
-                                           Foreground="#111827" />
-                                <TextBlock Text="{Binding WorkSummary.DeltaText}"
-                                           Style="{StaticResource PositiveDeltaTextStyle}" />
-                            </StackPanel>
+                            <Border Background="White"
+                                    CornerRadius="16"
+                                    Padding="24"
+                                    Margin="0,0,30,30"
+                                    BorderBrush="#E5E5E5"
+                                    BorderThickness="1"
+                                    MinHeight="500">
 
-                            <StackPanel Grid.Column="1"
-                                        HorizontalAlignment="Right"
-                                        VerticalAlignment="Center"
-                                        Spacing="4">
-                                <TextBlock Text="{Binding WorkSummary.PercentText}"
-                                           FontSize="22"
-                                           FontWeight="SemiBold"
-                                           Foreground="#2563EB"
-                                           HorizontalAlignment="Right" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
+                                <StackPanel Spacing="20">
 
-                    <!-- Entertainment -->
-                    <Border Grid.Column="2"
-                            Background="White"
-                            CornerRadius="16"
-                            Padding="24"
-                            BorderBrush="#E5E5E5"
-                            BorderThickness="1">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
+                                    <!-- SUMMARY -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
 
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="{Binding EntertainmentSummary.Name}"
-                                           FontSize="20"
-                                           FontWeight="SemiBold"
-                                           Foreground="#111827" />
-                                <TextBlock Text="{Binding EntertainmentSummary.TimeText}"
-                                           FontSize="26"
-                                           FontWeight="SemiBold"
-                                           Foreground="#111827" />
-                                <TextBlock Text="{Binding EntertainmentSummary.DeltaText}"
-                                           Style="{StaticResource NegativeDeltaTextStyle}" />
-                            </StackPanel>
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="{Binding Summary.Name}"
+                                                       FontSize="20"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="#111827" />
 
-                            <StackPanel Grid.Column="1"
-                                        HorizontalAlignment="Right"
-                                        VerticalAlignment="Center"
-                                        Spacing="4">
-                                <TextBlock Text="{Binding EntertainmentSummary.PercentText}"
-                                           FontSize="22"
-                                           FontWeight="SemiBold"
-                                           Foreground="#F97316"
-                                           HorizontalAlignment="Right" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                </Grid>
+                                            <TextBlock Text="{Binding Summary.TimeText}"
+                                                       FontSize="26"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="#111827" />
 
-                <!-- APP LISTS -->
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="30" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding Summary.DeltaText}"
+                                                        Style="{StaticResource PositiveDeltaTextStyle}" />
+                                        </StackPanel>
 
-                    <!-- Work apps -->
-                    <Border Grid.Column="0"
-                            Background="White"
-                            CornerRadius="16"
-                            Padding="24"
-                            BorderBrush="#E5E5E5"
-                            BorderThickness="1">
-                        <StackPanel Spacing="16">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Summary.PercentText}"
+                                                   FontSize="22"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#2563EB"
+                                                   VerticalAlignment="Center"
+                                                   HorizontalAlignment="Right"/>
+                                    </Grid>
 
-                                <TextBlock Grid.Column="0"
-                                           Text="Приложение"
-                                           Style="{StaticResource MetricMediumTextStyle}"
-                                           Foreground="#6B7280" />
+                                    <!-- HEADER -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
 
-                                <TextBlock Grid.Column="1"
-                                           Text="Время"
-                                           Style="{StaticResource MetricMediumTextStyle}"
-                                           Foreground="#6B7280"
-                                           HorizontalAlignment="Right"/>
-                            </Grid>
-                            <ItemsControl ItemsSource="{Binding WorkApplications}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="viewModels:CategoryApplicationUsage">
-                                        <Grid Margin="0,4">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Приложение"
+                                                   Style="{StaticResource MetricMediumTextStyle}"
+                                                   Foreground="#6B7280" />
 
-                                            <Border Grid.Column="0" Width="32" Height="32" Background="#A4C5EA" CornerRadius="8" Margin="0,0,10,0"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="Время"
+                                                   Style="{StaticResource MetricMediumTextStyle}"
+                                                   Foreground="#6B7280"
+                                                   HorizontalAlignment="Right"/>
+                                    </Grid>
 
-                                            <StackPanel Grid.Column="1">
-                                                <TextBlock Text="{x:Bind Name}"
-                                                           Style="{StaticResource AppTextStyle}"/>
-                                                <TextBlock Text="{x:Bind Category}"
-                                                           Style="{StaticResource CaptionTextStyle}" />
-                                            </StackPanel>
+                                    <!-- APPS -->
+                                    <ItemsControl ItemsSource="{Binding TopApplications}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="viewModels:CategoryApplicationUsage">
 
-                                            <TextBlock Grid.Column="2"
-                                                       Text="{x:Bind TimeText}"
-                                                       Style="{StaticResource AppTextStyle}" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Border>
+                                                <Grid Margin="0,4">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
 
-                    <!-- Entertainment apps -->
-                    <Border Grid.Column="2"
-                            Background="White"
-                            CornerRadius="16"
-                            Padding="24"
-                            BorderBrush="#E5E5E5"
-                            BorderThickness="1">
-                        <StackPanel Spacing="16">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                                                    <!-- ICON -->
+                                                    <Border Grid.Column="0"
+                                                            Width="32"
+                                                            Height="32"
+                                                            CornerRadius="8"
+                                                            Margin="0,0,10,0"
+                                                            Background="#F3F4F6">
 
-                                <TextBlock Grid.Column="0"
-                                           Text="Приложение"
-                                           FontSize="18"
-                                           FontWeight="SemiBold"
-                                           Foreground="#6B7280" />
+                                                        <Image Source="{Binding IconPath}"
+                                                               Width="20"
+                                                               Height="20"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"/>
+                                                    </Border>
 
-                                <TextBlock Grid.Column="1"
-                                           Text="Время"
-                                           FontSize="18"
-                                           FontWeight="SemiBold"
-                                           Foreground="#6B7280"
-                                           HorizontalAlignment="Right"/>
-                            </Grid>
+                                                    <!-- TEXT -->
+                                                    <StackPanel Grid.Column="1">
+                                                        <TextBlock Text="{x:Bind Name}" Style="{StaticResource AppTextStyle}" />
 
-                            <ItemsControl ItemsSource="{Binding EntertainmentApplications}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="viewModels:CategoryApplicationUsage">
-                                        <Grid Margin="0,4">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="{x:Bind Category}" Style="{StaticResource CaptionTextStyle}" />
+                                                    </StackPanel>
 
-                                            <Border Grid.Column="0" Width="32" Height="32" CornerRadius="8" Margin="0,0,10,0">
-                                                <Image Width="32"
-                                                       Height="32"
-                                                       Source="{Binding IconPath}" />
-                                            </Border>
+                                                    <!-- TIME -->
+                                                    <TextBlock Grid.Column="2"
+                                                               Text="{x:Bind TimeText}"
+                                                               Style="{StaticResource AppTextStyle}"
+                                                               HorizontalAlignment="Right"/>
+                                                </Grid>
 
-                                            <StackPanel Grid.Column="1">
-                                                <TextBlock Text="{x:Bind Name}"
-                                                           Style="{StaticResource AppTextStyle}" />
-                                                <TextBlock Text="{x:Bind Category}"
-                                                           Style="{StaticResource CaptionTextStyle}" />
-                                            </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                        
+                                    </ItemsControl>
+                                    <TextBlock Text="{x:Bind GetFormattedText(RemainingCount), Mode=OneWay}"
+                                               Visibility="{Binding RemainingCount, Converter={StaticResource ZeroToCollapsedConverter}}"
+                                               Style="{StaticResource CaptionTextStyle}"
+                                               Margin="0,8,0,0"/>
 
-                                            <TextBlock Grid.Column="2"
-                                                       Text="{x:Bind TimeText}"
-                                                       Style="{StaticResource AppTextStyle}" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Border>
-                </Grid>
+                                </StackPanel>
+                            </Border>
+
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
 
                 <!-- TIP -->
                 <Border Background="White"

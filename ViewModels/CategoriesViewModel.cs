@@ -1,250 +1,264 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using TimeTracker.Models;
+using static TimeTracker.ViewModels.CategoriesViewModel;
 
-namespace TimeTracker.ViewModels;
-
-public class CategoriesViewModel : INotifyPropertyChanged
+namespace TimeTracker.ViewModels
 {
-    private readonly Services.StatisticsService _statsService;
-
-    private string _headerTitle = "Категории";
-    private string _headerSubtitle = "Обзор использования вашего времени по категориям";
-
-    private CategorySummary _category1Summary = new CategorySummary("Нет данных", "0м", "Нет данных", "0%");
-    private CategorySummary _category2Summary = new CategorySummary("Нет данных", "0м", "Нет данных", "0%");
-
-    private string _tipTitle = "Совет по продуктивности";
-    private string _tipText = "";
-
-    // Выбранный период: 0 = сегодня, 1 = неделя, 2 = месяц
-    private int _selectedPeriod;
-    public int SelectedPeriod
+    public class CategoriesViewModel : INotifyPropertyChanged
     {
-        get => _selectedPeriod;
-        set
+        private readonly Services.StatisticsService _statsService;
+
+        private string _headerTitle = "Категории";
+        private string _headerSubtitle = "Обзор использования вашего времени по категориям";
+
+        private CategorySummary _category1Summary = new CategorySummary("Нет данных", "0м", "Нет данных", "0%");
+        private CategorySummary _category2Summary = new CategorySummary("Нет данных", "0м", "Нет данных", "0%");
+
+        private string _tipTitle = "Совет по продуктивности";
+        private string _tipText = "";
+
+        // Выбранный период: 0 = сегодня, 1 = неделя, 2 = месяц
+        private int _selectedPeriod;
+        public int SelectedPeriod
         {
-            if (SetField(ref _selectedPeriod, value))
+            get => _selectedPeriod;
+            set
             {
-                LoadData();
+                if (SetField(ref _selectedPeriod, value))
+                {
+                    LoadData();
+                }
             }
         }
-    }
 
-    public CategoriesViewModel() : this(App.StatisticsService)
-    {
-    }
-
-    public CategoriesViewModel(Services.StatisticsService statsService)
-    {
-        _statsService = statsService;
-
-        WorkApplications = new ObservableCollection<CategoryApplicationUsage>();
-        EntertainmentApplications = new ObservableCollection<CategoryApplicationUsage>();
-
-        // Загрузка данных
-        LoadData();
-    }
-
-    private void LoadData()
-    {
-        var (from, to) = GetDateRange();
-        var categoryStats = _statsService.GetCategoryStats(from, to).ToList();
-        
-        var totalSeconds = categoryStats.Sum(c => c.TotalSeconds);
-
-        // Первая категория (обычно Работа)
-        if (categoryStats.Count > 0)
+        public CategoriesViewModel() : this(App.StatisticsService)
         {
-            var cat1 = categoryStats[0];
-            var cat1Percent = totalSeconds > 0 ? (double)cat1.TotalSeconds / totalSeconds * 100 : 0;
-            var cat1Previous = GetPreviousPeriodStats(cat1.CategoryName, from);
-            var cat1Delta = cat1Previous > 0 
-                ? ((double)(cat1.TotalSeconds - cat1Previous) / cat1Previous * 100) 
-                : 0;
-
-            Category1Summary = new CategorySummary(
-                cat1.CategoryName,
-                FormatTime(cat1.TotalSeconds),
-                cat1Delta >= 0 ? $"+{cat1Delta:F0}% выше среднего" : $"{cat1Delta:F0}% ниже среднего",
-                $"{cat1Percent:F0}%");
-        }
-        else
-        {
-            Category1Summary = new CategorySummary("Нет данных", "0м", "Нет данных", "0%");
         }
 
-        // Вторая категория (обычно Развлечения)
-        if (categoryStats.Count > 1)
+        public CategoriesViewModel(Services.StatisticsService statsService)
         {
-            var cat2 = categoryStats[1];
-            var cat2Percent = totalSeconds > 0 ? (double)cat2.TotalSeconds / totalSeconds * 100 : 0;
-            var cat2Previous = GetPreviousPeriodStats(cat2.CategoryName, from);
-            var cat2Delta = cat2Previous > 0 
-                ? ((double)(cat2.TotalSeconds - cat2Previous) / cat2Previous * 100) 
-                : 0;
+            _statsService = statsService;
 
-            Category2Summary = new CategorySummary(
-                cat2.CategoryName,
-                FormatTime(cat2.TotalSeconds),
-                cat2Delta >= 0 ? $"+{cat2Delta:F0}% выше среднего" : $"{cat2Delta:F0}% ниже среднего",
-                $"{cat2Percent:F0}%");
-        }
-        else
-        {
-            Category2Summary = new CategorySummary("Нет данных", "0м", "Нет данных", "0%");
+            Category1Applications = new ObservableCollection<CategoryApplicationUsage>();
+            Category2Applications = new ObservableCollection<CategoryApplicationUsage>();
+
+            // Загрузка данных
+            LoadData();
         }
 
-        // Приложения по категориям
-        var apps = _statsService.GetAppsWithCategories(from, to).ToList();
-
-        WorkApplications.Clear();
-        EntertainmentApplications.Clear();
-
-        foreach (var app in apps)
+        private void LoadData()
         {
-            var usage = new CategoryApplicationUsage(
-                app.AppName,
-                app.CategoryName,
-                FormatTime(app.TotalSeconds),
-                app.IconPath);
+            var (from, to) = GetDateRange();
 
-            // Рабочие категории
-            if (app.CategoryName == "Работа" || app.CategoryName == "Обучение")
+            var categoryStats = _statsService
+                .GetCategoryStats(from, to)
+                .ToList();
+
+            var apps = _statsService
+                .GetAppsWithCategories(from, to)
+                .ToList();
+
+            var totalSeconds = categoryStats.Sum(c => c.TotalSeconds);
+
+            Categories.Clear();
+
+            // 1. Создаём категории
+            foreach (var cat in categoryStats)
             {
-                WorkApplications.Add(usage);
+                var percent = totalSeconds > 0
+                    ? (double)cat.TotalSeconds / totalSeconds * 100
+                    : 0;
+
+                var previous = GetPreviousPeriodStats(cat.CategoryName, from);
+
+                var delta = previous > 0
+                    ? ((double)(cat.TotalSeconds - previous) / previous * 100)
+                    : 0;
+
+                var summary = new CategorySummary(
+                    cat.CategoryName,
+                    FormatTime(cat.TotalSeconds),
+                    delta >= 0
+                        ? $"+{delta:F0}% выше среднего"
+                        : $"{delta:F0}% ниже среднего",
+                    $"{percent:F0}%"
+                );
+
+                Categories.Add(new CategoryBlock
+                {
+                    Summary = summary
+                });
+            }
+
+            // 2. Раскладываем приложения по категориям
+            foreach (var app in apps)
+            {
+                var category = Categories
+                    .FirstOrDefault(c => c.Summary.Name == app.CategoryName);
+
+                if (category == null)
+                    continue;
+
+                if (string.IsNullOrEmpty(app.CategoryName))
+                    continue;
+
+                category.Applications.Add(new CategoryApplicationUsage(
+                    app.AppName,
+                    app.CategoryName,
+                    FormatTime(app.TotalSeconds),
+                    app.IconPath
+                ));
+            }
+
+            // 3. Совет (оставляем как есть, но лучше тоже переработать)
+            if (categoryStats.Any())
+            {
+                var topCat = categoryStats.First();
+
+                TipText =
+                    $"Вы больше всего времени провели в категории '{topCat.CategoryName}'. " +
+                    $"Попробуйте делать перерывы каждые 2 часа.";
             }
             else
             {
-                EntertainmentApplications.Add(usage);
+                TipText = "Начните отслеживание времени.";
             }
         }
 
-        // Совет
-        if (categoryStats.Any())
+        private (DateTime from, DateTime to) GetDateRange()
         {
-            var topCat = categoryStats.First();
-            TipText = $"Вы провели на {Math.Abs((topCat.TotalSeconds > 0 ? 15 : 0))}% больше времени в категории '{topCat.CategoryName}'. Попробуйте спланировать 15-минутный перерыв каждые 2 часа, чтобы сохранить фокус.";
-        }
-        else
-        {
-            TipText = "Начните использовать приложение для отслеживания времени по категориям.";
-        }
-    }
-
-    private (DateTime from, DateTime to) GetDateRange()
-    {
-        var today = DateTime.Today;
-        return SelectedPeriod switch
-        {
-            0 => (today, today.AddDays(1).AddSeconds(-1)), // Сегодня
-            1 => (today.AddDays(-7), today.AddDays(1).AddSeconds(-1)), // Неделя
-            2 => (today.AddMonths(-1), today.AddDays(1).AddSeconds(-1)), // Месяц
-            _ => (today, today.AddDays(1).AddSeconds(-1))
-        };
-    }
-
-    private int GetPreviousPeriodStats(string categoryName, DateTime currentFrom)
-    {
-        var previousFrom = SelectedPeriod switch
-        {
-            0 => currentFrom.AddDays(-1),
-            1 => currentFrom.AddDays(-7),
-            2 => currentFrom.AddMonths(-1),
-            _ => currentFrom
-        };
-
-        var previousStats = _statsService.GetCategoryStats(previousFrom, currentFrom);
-        return previousStats.FirstOrDefault(c => c.CategoryName == categoryName).TotalSeconds;
-    }
-
-    private static string FormatTime(int totalSeconds)
-    {
-        var ts = TimeSpan.FromSeconds(totalSeconds);
-        if (ts.TotalHours >= 1)
-        {
-            return $"{(int)ts.TotalHours}ч {ts.Minutes}м";
-        }
-        return $"{ts.Minutes}м";
-    }
-
-    public string HeaderTitle
-    {
-        get => _headerTitle;
-        set => SetField(ref _headerTitle, value);
-    }
-
-    public string HeaderSubtitle
-    {
-        get => _headerSubtitle;
-        set => SetField(ref _headerSubtitle, value);
-    }
-
-    public CategorySummary Category1Summary
-    {
-        get => _category1Summary;
-        set => SetField(ref _category1Summary, value);
-    }
-
-    public CategorySummary Category2Summary
-    {
-        get => _category2Summary;
-        set => SetField(ref _category2Summary, value);
-    }
-
-    // Alias для совместимости с XAML
-    public CategorySummary WorkSummary
-    {
-        get => _category1Summary;
-        set => SetField(ref _category1Summary, value);
-    }
-
-    public CategorySummary EntertainmentSummary
-    {
-        get => _category2Summary;
-        set => SetField(ref _category2Summary, value);
-    }
-
-    public ObservableCollection<CategoryApplicationUsage> WorkApplications { get; }
-
-    public ObservableCollection<CategoryApplicationUsage> EntertainmentApplications { get; }
-
-    public string TipTitle
-    {
-        get => _tipTitle;
-        set => SetField(ref _tipTitle, value);
-    }
-
-    public string TipText
-    {
-        get => _tipText;
-        set => SetField(ref _tipText, value);
-    }
-
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
-
-    protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-    {
-        if (Equals(field, value))
-        {
-            return false;
+            var today = DateTime.Today;
+            return SelectedPeriod switch
+            {
+                0 => (today, today.AddDays(1).AddSeconds(-1)), // Сегодня
+                1 => (today.AddDays(-7), today.AddDays(1).AddSeconds(-1)), // Неделя
+                2 => (today.AddMonths(-1), today.AddDays(1).AddSeconds(-1)), // Месяц
+                _ => (today, today.AddDays(1).AddSeconds(-1))
+            };
         }
 
-        field = value;
-        OnPropertyChanged(propertyName);
-        return true;
+        private int GetPreviousPeriodStats(string categoryName, DateTime currentFrom)
+        {
+            var previousFrom = SelectedPeriod switch
+            {
+                0 => currentFrom.AddDays(-1),
+                1 => currentFrom.AddDays(-7),
+                2 => currentFrom.AddMonths(-1),
+                _ => currentFrom
+            };
+
+            var previousStats = _statsService.GetCategoryStats(previousFrom, currentFrom);
+            return previousStats.FirstOrDefault(c => c.CategoryName == categoryName).TotalSeconds;
+        }
+
+        private static string FormatTime(int totalSeconds)
+        {
+            var ts = TimeSpan.FromSeconds(totalSeconds);
+            if (ts.TotalHours >= 1)
+            {
+                return $"{(int)ts.TotalHours}ч {ts.Minutes}м";
+            }
+            return $"{ts.Minutes}м";
+        }
+ 
+        public string HeaderTitle
+        {
+            get => _headerTitle;
+            set => SetField(ref _headerTitle, value);
+        }
+
+        public string HeaderSubtitle
+        {
+            get => _headerSubtitle;
+            set => SetField(ref _headerSubtitle, value);
+        }
+        /*
+        public CategorySummary Category1Summary
+        {
+            get => _category1Summary;
+            set => SetField(ref _category1Summary, value);
+        }
+
+        public CategorySummary Category2Summary
+        {
+            get => _category2Summary;
+            set => SetField(ref _category2Summary, value);
+        }
+
+        // Alias для совместимости с XAML
+        public CategorySummary WorkSummary
+        {
+            get => _category1Summary;
+            set => SetField(ref _category1Summary, value);
+        }
+
+        public CategorySummary EntertainmentSummary
+        {
+            get => _category2Summary;
+            set => SetField(ref _category2Summary, value);
+        }*/
+
+        public ObservableCollection<CategoryApplicationUsage> Category1Applications { get; }
+
+        public ObservableCollection<CategoryApplicationUsage> Category2Applications { get; }
+
+        public ObservableCollection<CategoryBlock> Categories { get; }
+            = new ObservableCollection<CategoryBlock>();
+
+        public string TipTitle
+        {
+            get => _tipTitle;
+            set => SetField(ref _tipTitle, value);
+        }
+
+        public string TipText
+        {
+            get => _tipText;
+            set => SetField(ref _tipText, value);
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+        {
+            if (Equals(field, value))
+            {
+                return false;
+            }
+
+            field = value;
+            OnPropertyChanged(propertyName);
+            return true;
+        }
     }
+
+    public class CategoryBlock
+    {
+        public CategorySummary Summary { get; set; }
+
+        public ObservableCollection<CategoryApplicationUsage> Applications { get; set; }
+            = new ObservableCollection<CategoryApplicationUsage>();
+
+        public IEnumerable<CategoryApplicationUsage> TopApplications =>
+            Applications.Take(5);
+
+        public int RemainingCount =>
+            Math.Max(0, Applications.Count - 5);
+
+        public string GetFormattedText(int count) => $"И ещё {count} приложений";
+    }
+
+    public record CategorySummary(string Name, string TimeText, string DeltaText, string PercentText);
+
+    public record CategoryApplicationUsage(string Name, string Category, string TimeText, string? IconPath);
 }
-
-public record CategorySummary(string Name, string TimeText, string DeltaText, string PercentText);
-
-public record CategoryApplicationUsage(string Name, string Category, string TimeText, string? IconPath);
-
