@@ -79,6 +79,19 @@
                     </StackPanel>
                 </Button>
 
+                <Button Command="{Binding NavigateCommand}"
+                        CommandParameter="ApplicationsPage"
+                        Style="{Binding CurrentPage,
+                                Converter={StaticResource PageToStyleConverter},
+                                ConverterParameter=ApplicationsPage}">    
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+
+                        <FontIcon Glyph="&#xe8cb;" FontSize="18"/>
+
+                        <TextBlock Text="Приложения"/>
+                    </StackPanel>
+                </Button>
+
                 <Button Content="Отчёты"
                     FontSize="16"
                     Foreground="#636E72"/>

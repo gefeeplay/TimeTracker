@@ -40,6 +40,7 @@ namespace TimeTracker.ViewModels
                 {
                     "DashboardPage" => typeof(Views.DashboardPage),
                     "CategoriesPage" => typeof(Views.CategoriesPage),
+                    "ApplicationsPage" => typeof(Views.ApplicationsPage),
                     _ => null
                 };
 

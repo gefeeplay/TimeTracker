@@ -212,4 +212,98 @@ public class StatisticsService
             WHERE StartTime >= @from AND EndTime <= @to",
             new { from, to });
     }
+
+    //Все приложения
+    public IEnumerable<AppWithCategory> GetAllApplications()
+    {
+        using var conn = _db.CreateConnection();
+
+        var query = @"
+        SELECT 
+            a.Id,
+            a.DisplayName,
+            a.ProcessName,
+            a.CategoryId,
+            a.IconPath,
+            c.Name as CategoryName
+        FROM Applications a
+        JOIN Categories c ON a.CategoryId = c.Id
+        WHERE a.IsActive = 1
+        ORDER BY a.DisplayName
+    ";
+
+        using var command = conn.CreateCommand();
+        command.CommandText = query;
+
+        using var reader = command.ExecuteReader();
+
+        var result = new List<AppWithCategory>();
+
+        while (reader.Read())
+        {
+            var processName = reader.IsDBNull(2) ? null : reader.GetString(2);
+
+            result.Add(new AppWithCategory
+            {
+                Id = reader.GetInt32(0),
+                AppName = reader.IsDBNull(1) ? "Unknown" : reader.GetString(1),
+                CategoryId = reader.GetInt32(3),
+                IconPath = reader.GetString(4),
+                CategoryName = reader.GetString(5),
+               
+            });
+        }
+
+        return result;
+    }
+
+    //Список категорий с id
+    public IEnumerable<Category> GetAllCategories()
+    {
+        using var conn = _db.CreateConnection();
+
+        var query = @"
+        SELECT Id, Name
+        FROM Categories
+        ORDER BY Name
+    ";
+
+        using var command = conn.CreateCommand();
+        command.CommandText = query;
+
+        using var reader = command.ExecuteReader();
+
+        var result = new List<Category>();
+
+        while (reader.Read())
+        {
+            result.Add(new Category
+            {
+                Id = reader.GetInt32(0),
+                Name = reader.GetString(1)
+            });
+        }
+
+        return result;
+    }
+
+    //Обновление категории приложения
+    public void UpdateApplicationCategory(int applicationId, int newCategoryId)
+    {
+        using var conn = _db.CreateConnection();
+
+        var query = @"
+        UPDATE Applications
+        SET CategoryId = @categoryId
+        WHERE Id = @appId
+        ";
+
+        using var command = conn.CreateCommand();
+        command.CommandText = query;
+
+        command.Parameters.AddWithValue("@categoryId", newCategoryId);
+        command.Parameters.AddWithValue("@appId", applicationId);
+
+        command.ExecuteNonQuery();
+    }
 }
