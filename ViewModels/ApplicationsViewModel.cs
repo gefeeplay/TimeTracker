@@ -106,7 +106,7 @@ namespace TimeTracker.ViewModels {
                     app.Id,
                     app.AppName,
                     app.CategoryId,
-                    app.IconPath
+                    app.IconPath!
                 ));
             }
         }
