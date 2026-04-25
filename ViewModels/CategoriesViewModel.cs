@@ -99,7 +99,7 @@ namespace TimeTracker.ViewModels
             foreach (var app in apps)
             {
                 var category = Categories
-                    .FirstOrDefault(c => c.Summary.Name == app.CategoryName);
+                    .FirstOrDefault(c => c.Summary?.Name == app.CategoryName);
 
                 if (category == null)
                     continue;
@@ -242,9 +242,22 @@ namespace TimeTracker.ViewModels
         }
     }
 
-    public class CategoryBlock
+    public class CategoryBlock : INotifyPropertyChanged
     {
-        public CategorySummary Summary { get; set; }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        public CategoryBlock()
+        {
+            // Подписываемся на изменения коллекции, чтобы обновить зависимые свойства
+            Applications.CollectionChanged += (s, e) =>
+            {
+                OnPropertyChanged(nameof(RemainingCount));
+                OnPropertyChanged(nameof(TopApplications));
+            };
+        }
+
+        public CategorySummary? Summary { get; set; }
 
         public ObservableCollection<CategoryApplicationUsage> Applications { get; set; }
             = new ObservableCollection<CategoryApplicationUsage>();
@@ -256,6 +269,9 @@ namespace TimeTracker.ViewModels
             Math.Max(0, Applications.Count - 5);
 
         public string GetFormattedText(int count) => $"И ещё {count} приложений";
+
+        protected void OnPropertyChanged([CallerMemberName] string? name = null) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 
     public record CategorySummary(string Name, string TimeText, string DeltaText, string PercentText);
