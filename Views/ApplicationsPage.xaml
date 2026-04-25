@@ -45,10 +45,7 @@
                 <Button Grid.Column="1"
                         Content="Сохранить"
                         Command="{Binding SaveCommand}"
-                        Padding="16,8"
-                        Background="#2563EB"
-                        Foreground="White"
-                        CornerRadius="8"/>
+                        Style="{StaticResource PrimaryButtonStyle}"/>
 
             </Grid>
         </Border>
@@ -124,12 +121,7 @@
                                                   SelectedValue="{x:Bind CategoryId, Mode=TwoWay}"
                                                   SelectedValuePath="Id"
                                                   DisplayMemberPath="Name"
-                                                  Background="White"
-                                                  Foreground="#2563EB"
-                                                  BorderBrush="#E5E5E5"
-                                                  BorderThickness="1"
-                                                  Padding="8,4"
-                                                  CornerRadius="8"/>
+                                                  Style="{StaticResource PrimaryComboBoxStyle}"/>
                                     </Grid>
 
                                 </DataTemplate>

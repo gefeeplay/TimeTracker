@@ -3,6 +3,16 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Default">
+            <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#6199D6" />
+            <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="#548AC5" />
+            <SolidColorBrush x:Key="ComboBoxForegroundPointerOver" Color="White" />
+            <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="#548AC5" />
+            <!-- И остальные ресурсы сюда -->
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+
     <!-- ============================= -->
     <!-- Обычная навигационная кнопка -->
     <!-- ============================= -->
@@ -140,5 +150,100 @@
         </Setter>
 
     </Style>
+
+    <!-- ============================= -->
+    <!-- Primary кнопка (без hover fade) -->
+    <!-- ============================= -->
+
+    <Style x:Key="PrimaryButtonStyle"
+       TargetType="Button">
+
+        <Setter Property="Background" Value="#548AC5"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Padding" Value="16,8"/>
+        <Setter Property="CornerRadius" Value="8"/>
+
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+
+                    <Grid>
+
+                        <Border x:Name="BackgroundBorder"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="{TemplateBinding CornerRadius}">
+
+                            <ContentPresenter
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Padding="{TemplateBinding Padding}"
+                            Content="{TemplateBinding Content}"
+                            Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+
+                                <VisualState x:Name="Normal"/>
+
+                                <VisualState x:Name="PointerOver">
+                                    <Storyboard>
+                                        <ObjectAnimationUsingKeyFrames
+                                        Storyboard.TargetName="BackgroundBorder"
+                                        Storyboard.TargetProperty="Background">
+                                            <DiscreteObjectKeyFrame
+                                            KeyTime="0"
+                                            Value="#6199D6"/>
+                                        </ObjectAnimationUsingKeyFrames>
+                                    </Storyboard>
+                                </VisualState>
+
+                                <VisualState x:Name="Pressed">
+                                    <Storyboard>
+                                        <ObjectAnimationUsingKeyFrames
+                                        Storyboard.TargetName="BackgroundBorder"
+                                        Storyboard.TargetProperty="Background">
+                                            <DiscreteObjectKeyFrame
+                                                KeyTime="0"
+                                                Value="#3E6FA3"/>
+                                        </ObjectAnimationUsingKeyFrames>
+                                    </Storyboard>
+                                </VisualState>
+
+                                <VisualState x:Name="Disabled">
+                                    <Storyboard>
+                                        <DoubleAnimation
+                                        Storyboard.TargetName="BackgroundBorder"
+                                        Storyboard.TargetProperty="Opacity"
+                                        To="0.5"
+                                        Duration="0"/>
+                                    </Storyboard>
+                                </VisualState>
+
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+
+                    </Grid>
+
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================= -->
+    <!-- ComboBox стили -->
+    <!-- ============================= -->
+    <Style x:Key="PrimaryComboBoxStyle"
+       TargetType="ComboBox">
+
+        <Setter Property="Background" Value="#548AC5"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="MinWidth" Value="150"/>
+
+    </Style>
+
 
 </ResourceDictionary>
