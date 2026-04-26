@@ -1,0 +1,30 @@
+<UserControl
+    x:Class="TimeTracker.Views.TrayIconView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:tb="using:H.NotifyIcon"
+    >
+
+    <tb:TaskbarIcon
+        x:Name="TrayIcon"
+        ToolTipText="Time Tracker"
+        IconSource="/Assets/favicon.ico"
+        LeftClickCommand="{x:Bind ShowHideCommand}"
+        NoLeftClickDelay="True">
+
+        <tb:TaskbarIcon.ContextFlyout>
+            <MenuFlyout>
+                <MenuFlyoutItem
+                    Text="Открыть"
+                    Command="{x:Bind ShowHideCommand}" />
+
+                <MenuFlyoutSeparator />
+
+                <MenuFlyoutItem
+                    Text="Выход"
+                    Command="{x:Bind ExitCommand}" />
+            </MenuFlyout>
+        </tb:TaskbarIcon.ContextFlyout>
+
+    </tb:TaskbarIcon>
+</UserControl>
