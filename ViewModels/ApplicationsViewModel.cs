@@ -65,6 +65,11 @@ namespace TimeTracker.ViewModels {
 
         public string HeaderTitle { get; } = "Приложения";
         public string HeaderSubtitle { get; } = "Назначайте категории приложениям";
+        public string TipsTitle { get; } = "Управление категориями";
+        public string TipsText { get; } = "Вы можете управлять категорями приложений в ручную." +
+            " Каждое новое приложение попадает в категорию \"Без категории\"." +
+            " Чтобы сохранить измениния необходимо нажать кнопку \"Сохранить\". ";
+
 
         public ObservableCollection<ApplicationItemViewModel> Applications { get; }
             = new();

@@ -146,7 +146,22 @@
                         <Border Background="White" CornerRadius="12" Padding="20" BorderBrush="#E5E5E5" BorderThickness="1">
                             <StackPanel Spacing="8">
                                 <TextBlock Text="{Binding TipsTitle}" Style="{StaticResource SectionTitleTextStyle}"/>
-                                <TextBlock Text="{Binding TipsText}" Style="{StaticResource CaptionTextStyle}" TextWrapping="Wrap"/>
+                                <Grid ColumnDefinitions="Auto, *">
+                                    <Border Grid.Column="0"
+                                            Width="32"
+                                            Height="32"
+                                            CornerRadius="8"
+                                            Margin="0,0,10,0"
+                                            Background="#F3F4F6"
+                                            VerticalAlignment="Top">
+                                        <FontIcon Glyph="&#xea1f;" FontSize="18" Foreground="#548AC5"/>
+                                    </Border>
+
+                                    <TextBlock Grid.Column="1" 
+                                               Text="{Binding TipsText}" 
+                                               Style="{StaticResource CaptionTextStyle}" 
+                                               TextWrapping="Wrap"/>
+                                </Grid>
                             </StackPanel>
                         </Border>
 
