@@ -33,6 +33,7 @@ public partial class DashboardViewModel : INotifyPropertyChanged
     private string _mostFrequentTitle = "САМОЕ ЧАСТОЕ";
     private string _mostFrequentCategory = NO_DATA;
     private string _mostFrequentDescription = "Начните использовать приложение";
+    private double _mostFrequentSeconds = 0;
 
     private string _windowSwitchesTitle = "СМЕНА ОКОН";
     private string _windowSwitchesCount = "0";
@@ -148,11 +149,12 @@ public partial class DashboardViewModel : INotifyPropertyChanged
         if (mostFrequent.HasValue)
         {
             MostFrequentCategory = mostFrequent.Value.AppName;
+            MostFrequentSeconds = mostFrequent.Value.TotalSeconds;
             
             var totalSeconds = _statsService.GetTotalTimeForDate(today);
             if (totalSeconds > 0)
             {
-                var percent = (double)totalSecondsToday / totalSeconds * 100;
+                var percent = (double)MostFrequentSeconds / totalSeconds * 100;
                 MostFrequentDescription = $"{percent:F0}% от общего времени";
             }
             else
@@ -320,6 +322,12 @@ public partial class DashboardViewModel : INotifyPropertyChanged
     {
         get => _mostFrequentDescription;
         set => SetField(ref _mostFrequentDescription, value);
+    }
+
+    public double MostFrequentSeconds
+    {
+        get => _mostFrequentSeconds;
+        set => SetField(ref _mostFrequentSeconds, value);
     }
 
     public string WindowSwitchesTitle

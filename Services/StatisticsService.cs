@@ -178,7 +178,7 @@ public class StatisticsService
     }
 
     // Получить самое частое приложение за период
-    public (string AppName, string CategoryName)? GetMostFrequentApp(DateTime from, DateTime to)
+    public (string AppName, string CategoryName, int TotalSeconds)? GetMostFrequentApp(DateTime from, DateTime to)
     {
         using var conn = _db.CreateConnection();
 
@@ -199,7 +199,7 @@ public class StatisticsService
         if (result == null)
             return null;
 
-        return (result.AppName, result.CategoryName);
+        return (result.AppName, result.CategoryName, result.TotalSeconds);
     }
 
     // Получить количество переключений окон за период
