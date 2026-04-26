@@ -1,4 +1,5 @@
-﻿using LiveChartsCore;
+﻿using H.NotifyIcon;
+using LiveChartsCore;
 using Microsoft.UI.Xaml;
 using SQLitePCL;
 using System;
@@ -13,7 +14,8 @@ namespace TimeTracker
     
     public partial class App : Application
     {
-        private Window? _window;
+        public MainWindow? MainWindow { get; private set; }
+        public static bool HandleClosedEvents { get; set; } = true;
 
         // Статический доступ к сервисам
         public static Database Database { get; private set; } = null!;
@@ -35,8 +37,8 @@ namespace TimeTracker
             DbInitializer.Initialize(dbPath);
 
             System.Diagnostics.Debug.WriteLine(File.Exists(dbPath)
-    ? "DB EXISTS"
-    : "DB NOT FOUND");
+                ? "DB EXISTS"
+                : "DB NOT FOUND");
 
             Database = new Database(dbPath);
 
@@ -65,10 +67,19 @@ namespace TimeTracker
 
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
-            _window = new MainWindow();
-            _window.Activate();
+            MainWindow = new MainWindow();
+            MainWindow.Activate();
 
             ActivityTracker.Start();
+            MainWindow.Closed += (sender, args) =>
+            {
+                if (HandleClosedEvents)
+                {
+                    args.Handled = true;
+                    MainWindow.Hide();
+                }
+            };
+            MainWindow.Activate();
         }
     }
 }

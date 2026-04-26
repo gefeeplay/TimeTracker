@@ -13,6 +13,12 @@ public sealed partial class MainWindow : Window
 
         RootGrid.Loaded += RootGrid_Loaded;
 
+        this.AppWindow.Closing += (s, e) =>
+        {
+            e.Cancel = true;
+            this.AppWindow.Hide();
+        };
+
     }
 
     private void RootGrid_Loaded(object sender, RoutedEventArgs e)

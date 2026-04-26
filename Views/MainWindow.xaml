@@ -123,5 +123,8 @@
         <Frame Grid.Column="1"
            x:Name="ContentFrame"/>
 
+        <!-- ================= TRAY ICON ================= -->
+        <views:TrayIconView />
+
     </Grid>
 </Window>
