@@ -245,5 +245,86 @@
 
     </Style>
 
+    <!-- ============================= -->
+    <!-- Базовый стиль для кнопок периода -->
+    <!-- ============================= -->
+    <Style x:Key="PeriodButtonBaseStyle"
+       TargetType="Button">
+
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Padding" Value="16,6"/>
+        <Setter Property="CornerRadius" Value="8"/>
+
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+
+                        <Border x:Name="BackgroundBorder"
+                            Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}"
+                            CornerRadius="{TemplateBinding CornerRadius}">
+
+                            <ContentPresenter
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Content="{TemplateBinding Content}"
+                            Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+
+                                <VisualState x:Name="Normal"/>
+
+                                <VisualState x:Name="PointerOver">
+                                    <Storyboard>
+                                        <DoubleAnimation
+                                        Storyboard.TargetName="BackgroundBorder"
+                                        Storyboard.TargetProperty="Opacity"
+                                        To="0.85"
+                                        Duration="0:0:0.1"/>
+                                    </Storyboard>
+                                </VisualState>
+
+                                <VisualState x:Name="Pressed">
+                                    <Storyboard>
+                                        <DoubleAnimation
+                                        Storyboard.TargetName="BackgroundBorder"
+                                        Storyboard.TargetProperty="Opacity"
+                                        To="0.7"
+                                        Duration="0:0:0.05"/>
+                                    </Storyboard>
+                                </VisualState>
+
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================= -->
+    <!-- Активная кнопка периода -->
+    <!-- ============================= -->
+    <Style x:Key="ActivePeriodButtonStyle"
+       BasedOn="{StaticResource PeriodButtonBaseStyle}"
+       TargetType="Button">
+
+        <Setter Property="Background" Value="#548AC5"/>
+    </Style>
+
+    <!-- ============================= -->
+    <!-- Неактивная кнопка периода -->
+    <!-- ============================= -->
+    <Style x:Key="InactivePeriodButtonStyle"
+       BasedOn="{StaticResource PeriodButtonBaseStyle}"
+       TargetType="Button">
+
+        <Setter Property="Background" Value="#97AFC9"/>
+    </Style>
+
 
 </ResourceDictionary>
