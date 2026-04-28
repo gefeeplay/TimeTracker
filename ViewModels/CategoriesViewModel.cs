@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.UI.Xaml;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -9,6 +10,15 @@ using static TimeTracker.ViewModels.CategoriesViewModel;
 
 namespace TimeTracker.ViewModels
 {
+
+    public static class Periods
+    {
+        public const int Today = 0;
+        public const int Week = 1;
+        public const int Month = 2;
+    }
+
+
     public class CategoriesViewModel : INotifyPropertyChanged
     {
         private readonly Services.StatisticsService _statsService;
@@ -23,7 +33,7 @@ namespace TimeTracker.ViewModels
         private string _tipText = "";
 
         // Выбранный период: 0 = сегодня, 1 = неделя, 2 = месяц
-        private int _selectedPeriod;
+        private int _selectedPeriod = Periods.Today;
         public int SelectedPeriod
         {
             get => _selectedPeriod;
@@ -135,9 +145,9 @@ namespace TimeTracker.ViewModels
             var today = DateTime.Today;
             return SelectedPeriod switch
             {
-                0 => (today, today.AddDays(1).AddSeconds(-1)), // Сегодня
-                1 => (today.AddDays(-7), today.AddDays(1).AddSeconds(-1)), // Неделя
-                2 => (today.AddMonths(-1), today.AddDays(1).AddSeconds(-1)), // Месяц
+                Periods.Today => (today, today.AddDays(1).AddSeconds(-1)),
+                Periods.Week => (today.AddDays(-7), today.AddDays(1).AddSeconds(-1)),
+                Periods.Month => (today.AddMonths(-1), today.AddDays(1).AddSeconds(-1)),
                 _ => (today, today.AddDays(1).AddSeconds(-1))
             };
         }
@@ -146,9 +156,9 @@ namespace TimeTracker.ViewModels
         {
             var previousFrom = SelectedPeriod switch
             {
-                0 => currentFrom.AddDays(-1),
-                1 => currentFrom.AddDays(-7),
-                2 => currentFrom.AddMonths(-1),
+                Periods.Today => currentFrom.AddDays(-1),
+                Periods.Week => currentFrom.AddDays(-7),
+                Periods.Month => currentFrom.AddMonths(-1),
                 _ => currentFrom
             };
 
@@ -177,32 +187,7 @@ namespace TimeTracker.ViewModels
             get => _headerSubtitle;
             set => SetField(ref _headerSubtitle, value);
         }
-        /*
-        public CategorySummary Category1Summary
-        {
-            get => _category1Summary;
-            set => SetField(ref _category1Summary, value);
-        }
-
-        public CategorySummary Category2Summary
-        {
-            get => _category2Summary;
-            set => SetField(ref _category2Summary, value);
-        }
-
-        // Alias для совместимости с XAML
-        public CategorySummary WorkSummary
-        {
-            get => _category1Summary;
-            set => SetField(ref _category1Summary, value);
-        }
-
-        public CategorySummary EntertainmentSummary
-        {
-            get => _category2Summary;
-            set => SetField(ref _category2Summary, value);
-        }*/
-
+        
         public ObservableCollection<CategoryApplicationUsage> Category1Applications { get; }
 
         public ObservableCollection<CategoryApplicationUsage> Category2Applications { get; }
@@ -239,7 +224,7 @@ namespace TimeTracker.ViewModels
             field = value;
             OnPropertyChanged(propertyName);
             return true;
-        }
+        } 
     }
 
     public class CategoryBlock : INotifyPropertyChanged

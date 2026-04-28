@@ -35,26 +35,28 @@
                 <StackPanel Grid.Column="1"
                             Orientation="Horizontal"
                             Spacing="8">
+
                     <Button Content="Сегодня"
-                            Padding="18,6"
-                            Background="#111827"
-                            Foreground="White"
-                            BorderThickness="0"
-                            CornerRadius="8" />
+                            Click="Today_Click"
+                            Style="{x:Bind ViewModel.SelectedPeriod,
+                                    Mode=OneWay,
+                                    Converter={StaticResource PeriodToStyleConverter},
+                                    ConverterParameter=0}" />   
+
                     <Button Content="Неделя"
-                            Padding="18,6"
-                            Background="#F3F4F6"
-                            Foreground="#4B5563"
-                            BorderBrush="#E5E7EB"
-                            BorderThickness="1"
-                            CornerRadius="8" />
+                            Click="Week_Click"
+                            Style="{x:Bind ViewModel.SelectedPeriod,
+                                    Mode=OneWay,
+                                    Converter={StaticResource PeriodToStyleConverter},
+                                    ConverterParameter=1}" />
+
                     <Button Content="Месяц"
-                            Padding="18,6"
-                            Background="#F3F4F6"
-                            Foreground="#4B5563"
-                            BorderBrush="#E5E7EB"
-                            BorderThickness="1"
-                            CornerRadius="8" />
+                            Click="Month_Click"
+                            Style="{x:Bind ViewModel.SelectedPeriod,
+                                        Mode=OneWay,
+                                        Converter={StaticResource PeriodToStyleConverter},
+                                        ConverterParameter=2}" />
+
                 </StackPanel>
             </Grid>
         </Border>
