@@ -117,7 +117,7 @@
                                                        Foreground="#111827" />
 
                                             <TextBlock Text="{Binding Summary.DeltaText}"
-                                                        Style="{StaticResource PositiveDeltaTextStyle}" />
+                                                       Style="{Binding Summary.DeltaTextStyle}" />
                                         </StackPanel>
 
                                         <TextBlock Grid.Column="1"

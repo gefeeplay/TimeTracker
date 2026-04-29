@@ -26,9 +26,6 @@ namespace TimeTracker.ViewModels
         private string _headerTitle = "Категории";
         private string _headerSubtitle = "Обзор использования вашего времени по категориям";
 
-        private CategorySummary _category1Summary = new CategorySummary("Нет данных", "0м", "Нет данных", "0%");
-        private CategorySummary _category2Summary = new CategorySummary("Нет данных", "0м", "Нет данных", "0%");
-
         private string _tipTitle = "Совет по продуктивности";
         private string _tipText = "";
 
@@ -53,9 +50,6 @@ namespace TimeTracker.ViewModels
         public CategoriesViewModel(Services.StatisticsService statsService)
         {
             _statsService = statsService;
-
-            Category1Applications = new ObservableCollection<CategoryApplicationUsage>();
-            Category2Applications = new ObservableCollection<CategoryApplicationUsage>();
 
             // Загрузка данных
             LoadData();
@@ -96,7 +90,8 @@ namespace TimeTracker.ViewModels
                     delta >= 0
                         ? $"+{delta:F0}% выше среднего"
                         : $"{delta:F0}% ниже среднего",
-                    $"{percent:F0}%"
+                    $"{percent:F0}%",
+                    delta >= 0
                 );
 
                 Categories.Add(new CategoryBlock
@@ -187,10 +182,6 @@ namespace TimeTracker.ViewModels
             get => _headerSubtitle;
             set => SetField(ref _headerSubtitle, value);
         }
-        
-        public ObservableCollection<CategoryApplicationUsage> Category1Applications { get; }
-
-        public ObservableCollection<CategoryApplicationUsage> Category2Applications { get; }
 
         public ObservableCollection<CategoryBlock> Categories { get; }
             = new ObservableCollection<CategoryBlock>();
@@ -224,7 +215,7 @@ namespace TimeTracker.ViewModels
             field = value;
             OnPropertyChanged(propertyName);
             return true;
-        } 
+        }
     }
 
     public class CategoryBlock : INotifyPropertyChanged
@@ -259,7 +250,19 @@ namespace TimeTracker.ViewModels
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 
-    public record CategorySummary(string Name, string TimeText, string DeltaText, string PercentText);
+    public record CategorySummary(
+        string Name,
+        string TimeText,
+        string DeltaText,
+        string PercentText,
+        bool IsPositiveDelta
+    )
+    {
+        public Style DeltaTextStyle =>
+            IsPositiveDelta
+                ? (Style)Microsoft.UI.Xaml.Application.Current.Resources["PositiveDeltaTextStyle"]
+                : (Style)Microsoft.UI.Xaml.Application.Current.Resources["NegativeDeltaTextStyle"];
+    }
 
     public record CategoryApplicationUsage(string Name, string Category, string TimeText, string? IconPath);
 }
