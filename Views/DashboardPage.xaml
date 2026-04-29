@@ -77,8 +77,10 @@
                         <!-- График активности за неделю -->
                         <lvc:CartesianChart 
                             Height="300"
+                            Background="Transparent"
                             Series="{Binding WeekActivitySeries}"
                             XAxes="{Binding WeekActivityXAxes}"
+                            YAxes="{Binding WeekActivityYAxes}"
                             TooltipPosition="Top"
                             ZoomMode="None" />
                     </StackPanel>

@@ -64,6 +64,7 @@ public partial class DashboardViewModel : INotifyPropertyChanged
 
         WeekActivitySeries = Array.Empty<ISeries>();
         WeekActivityXAxes = Array.Empty<Axis>();
+        WeekActivityYAxes = Array.Empty<Axis>();
 
         LoadData(); // начальная загрузка    
     }
@@ -84,17 +85,6 @@ public partial class DashboardViewModel : INotifyPropertyChanged
 
     public void Initialize()
     {
-        //var appId = App.UsageService.GetOrCreateApplication("test_app");
-
-        //App.UsageService.AddSession(new UsageSession
-        //{
-        //    ApplicationId = appId, // теперь корректно
-        //    StartTime = DateTime.Now.AddMinutes(-30),
-        //    EndTime = DateTime.Now,
-        //    DurationSeconds = 1800,
-        //    CreatedAt = DateTime.Now
-        //});
-
         App.StatisticsService.RecalculateDailyStats(DateTime.Today);
 
         LoadData();
@@ -171,8 +161,24 @@ public partial class DashboardViewModel : INotifyPropertyChanged
         // Количество переключений окон (сессий)
         var switchesCount = _statsService.GetWindowSwitchesCount(today, today.AddDays(1));
         WindowSwitchesCount = switchesCount.ToString();
-        WindowSwitchesDescription = switchesCount > 0 
-            ? $"В среднем раз в {Math.Max(1, (8 * 3600) / Math.Max(1, switchesCount))} минут"
+        int averageSeconds = switchesCount > 0
+            ? Math.Max(1, totalSecondsToday / switchesCount)
+            : 0;
+        string timeText;
+        if (averageSeconds >= 3600) // Больше часа
+        {
+            timeText = $"{averageSeconds / 3600} часа {averageSeconds / 60} минут";
+        }
+        else if (averageSeconds >= 60) // Больше 1 минуты
+        {
+            timeText = $"{averageSeconds / 60} минут";
+        }
+        else
+        {
+            timeText = $"{averageSeconds} секунд";
+        }
+        WindowSwitchesDescription = switchesCount > 0
+            ? $"В среднем раз в {timeText}"
             : "Нет данных";
 
         // Данные для графика за неделю
@@ -194,6 +200,8 @@ public partial class DashboardViewModel : INotifyPropertyChanged
             new LineSeries<int>
             {
                 Values = weekValues,
+                YToolTipLabelFormatter = (chartPoint) =>
+                    FullFormatTime((int)chartPoint.Coordinate.PrimaryValue),
                 Fill = new SolidColorPaint(SKColor.Parse("#E3F2FD")),
                 Stroke = new SolidColorPaint(SKColor.Parse("#2196F3")) { StrokeThickness = 3 },
                 GeometryFill = new SolidColorPaint(SKColor.Parse("#2196F3")),
@@ -209,6 +217,16 @@ public partial class DashboardViewModel : INotifyPropertyChanged
             {
                 Labels = weekLabels,
                 LabelsRotation = 0,
+                LabelsPaint = new SolidColorPaint(SKColor.Parse("#6B7280")),
+                SeparatorsPaint = new SolidColorPaint(SKColor.Parse("#E5E7EB")) { StrokeThickness = 1 }
+            }
+        };
+        WeekActivityYAxes = new Axis[]
+        {
+            new Axis
+            {
+                MinLimit = 0,
+                Labeler = value => FullFormatTime(value),
                 LabelsPaint = new SolidColorPaint(SKColor.Parse("#6B7280")),
                 SeparatorsPaint = new SolidColorPaint(SKColor.Parse("#E5E7EB")) { StrokeThickness = 1 }
             }
@@ -269,6 +287,16 @@ public partial class DashboardViewModel : INotifyPropertyChanged
         return $"{ts.Minutes}м";
     }
 
+    private static string FullFormatTime(double seconds)
+    {
+        var ts = TimeSpan.FromSeconds(seconds);
+        if (ts.TotalHours >= 1)
+        {
+            return $"{(int)ts.TotalHours}ч {ts.Minutes}м {ts.Seconds}c";
+        }
+        return $"{ts.Minutes}м {ts.Seconds}c";
+    }
+
     private static string GetDayName(DayOfWeek day)
     {
         return day switch
@@ -287,6 +315,7 @@ public partial class DashboardViewModel : INotifyPropertyChanged
     // Свойства для графиков
     public ISeries[] WeekActivitySeries { get; private set; }
     public Axis[] WeekActivityXAxes { get; private set; }
+    public Axis[] WeekActivityYAxes { get; private set; }
 
     public string TotalTodayTitle
     {
