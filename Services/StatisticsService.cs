@@ -87,15 +87,6 @@ public class StatisticsService
     // Получить общее время за день (в секундах)
     public int GetTotalTimeForDate(DateTime date)
     {
-        /*
-        var start = date.Date;
-        var end = start.AddDays(1);
-
-        var startDateOnly = start.ToString("dd-MM-yyyy");
-        var endDateOnly = end.ToString("dd-MM-yyyy");
-
-        var dateOnly = date.ToString("dd-MM-yyyy");
-        */
         using var conn = _db.CreateConnection();
 
         //System.Diagnostics.Debug.WriteLine("date: " + date + "\nstart: " + date.ToString("yyyy-MM-dd"));
@@ -178,7 +169,7 @@ public class StatisticsService
     }
 
     // Получить самое частое приложение за период
-    public (string AppName, string CategoryName, int TotalSeconds)? GetMostFrequentApp(DateTime from, DateTime to)
+    public (string AppName, string CategoryName, int TotalSeconds, string? IconPath)? GetMostFrequentApp(DateTime from, DateTime to)
     {
         using var conn = _db.CreateConnection();
 
@@ -186,7 +177,8 @@ public class StatisticsService
             SELECT 
                 a.DisplayName as AppName,
                 c.Name as CategoryName,
-                SUM(u.DurationSeconds) as TotalSeconds
+                SUM(u.DurationSeconds) as TotalSeconds,
+                a.IconPath as IconPath
             FROM UsageSessions u
             JOIN Applications a ON a.Id = u.ApplicationId
             JOIN Categories c ON c.Id = a.CategoryId
@@ -199,7 +191,7 @@ public class StatisticsService
         if (result == null)
             return null;
 
-        return (result.AppName, result.CategoryName, result.TotalSeconds);
+        return (result.AppName, result.CategoryName, result.TotalSeconds, result.IconPath);
     }
 
     // Получить количество переключений окон за период

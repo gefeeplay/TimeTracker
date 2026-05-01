@@ -29,10 +29,12 @@ public partial class DashboardViewModel : INotifyPropertyChanged
     private string _totalTodayTitle = "ВСЕГО СЕГОДНЯ";
     private string _totalTodayTime = "0м";
     private string _totalTodayDelta = NO_DATA;
+    private bool _boolTodayDelta = false;
 
     private string _mostFrequentTitle = "САМОЕ ЧАСТОЕ";
     private string _mostFrequentCategory = NO_DATA;
     private string _mostFrequentDescription = "Начните использовать приложение";
+    private string _mostFrequentIcon = "";
     private double _mostFrequentSeconds = 0;
 
     private string _windowSwitchesTitle = "СМЕНА ОКОН";
@@ -128,6 +130,7 @@ public partial class DashboardViewModel : INotifyPropertyChanged
         {
             var delta = ((double)(totalSecondsToday - previousTotalSeconds) / previousTotalSeconds) * 100;
             TotalTodayDelta = delta >= 0 ? $"+{delta:F0}%" : $"{delta:F0}%";
+            BoolTodayDelta = delta >= 0;
         }
         else
         {
@@ -140,6 +143,7 @@ public partial class DashboardViewModel : INotifyPropertyChanged
         {
             MostFrequentCategory = mostFrequent.Value.AppName;
             MostFrequentSeconds = mostFrequent.Value.TotalSeconds;
+            MostFrequentIcon = mostFrequent.Value.IconPath!;
             
             var totalSeconds = _statsService.GetTotalTimeForDate(today);
             if (totalSeconds > 0)
@@ -311,6 +315,10 @@ public partial class DashboardViewModel : INotifyPropertyChanged
             _ => ""
         };
     }
+    public Style DeltaTextStyle =>
+            BoolTodayDelta
+                ? (Style)Microsoft.UI.Xaml.Application.Current.Resources["PositiveDeltaTextStyle"]
+                : (Style)Microsoft.UI.Xaml.Application.Current.Resources["NegativeDeltaTextStyle"];
 
     // Свойства для графиков
     public ISeries[] WeekActivitySeries { get; private set; }
@@ -335,6 +343,12 @@ public partial class DashboardViewModel : INotifyPropertyChanged
         set => SetField(ref _totalTodayDelta, value);
     }
 
+    public bool BoolTodayDelta
+    {
+        get => _boolTodayDelta;
+        set => SetField(ref _boolTodayDelta, value);
+    }
+
     public string MostFrequentTitle
     {
         get => _mostFrequentTitle;
@@ -351,6 +365,12 @@ public partial class DashboardViewModel : INotifyPropertyChanged
     {
         get => _mostFrequentDescription;
         set => SetField(ref _mostFrequentDescription, value);
+    }
+
+    public string MostFrequentIcon
+    {
+        get => _mostFrequentIcon;
+        set => SetField(ref _mostFrequentIcon, value);
     }
 
     public double MostFrequentSeconds
