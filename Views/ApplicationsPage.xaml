@@ -52,7 +52,7 @@
 
         <!-- CONTENT -->
         <ScrollViewer Grid.Row="1">
-            <StackPanel Margin="40" Spacing="20">
+            <StackPanel Margin="20" Spacing="15">
 
                 <!-- Совет -->
                 <Border Background="White" CornerRadius="12" Padding="20" BorderBrush="#E5E5E5" BorderThickness="1">

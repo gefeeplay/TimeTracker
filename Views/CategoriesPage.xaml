@@ -63,8 +63,8 @@
 
         <!-- SCROLLABLE CONTENT -->
         <ScrollViewer Grid.Row="1">
-            <StackPanel Margin="40"
-                        Spacing="30">
+            <StackPanel Margin="20"
+                        Spacing="15">
 
                 <!-- TOP CATEGORY CARDS -->
                 <ListView ItemsSource="{Binding Categories}"
@@ -78,10 +78,10 @@
                     <ListView.ItemsPanel>
                         <ItemsPanelTemplate>
                             <ItemsWrapGrid Orientation="Horizontal"
-                                           MaximumRowsOrColumns="2"
+                                           MaximumRowsOrColumns="3"
                                            ItemWidth="500"
                                            HorizontalAlignment="Stretch"
-                                           ItemHeight="550"/>
+                                           MinHeight="250"/>
                         </ItemsPanelTemplate>
                     </ListView.ItemsPanel>
 
@@ -212,13 +212,23 @@
                         BorderThickness="1">
                     <StackPanel Spacing="6">
                         <TextBlock Text="{Binding TipTitle}"
-                                   FontSize="16"
-                                   FontWeight="SemiBold"
-                                   Foreground="#111827" />
-                        <TextBlock Text="{Binding TipText}"
-                                   FontSize="14"
-                                   Foreground="#4B5563"
-                                   TextWrapping="Wrap" />
+                                   Style="{StaticResource SectionTitleTextStyle}" />
+                        <Grid ColumnDefinitions="Auto, *">
+                            <Border Grid.Column="0"
+                                    Width="32"
+                                    Height="32"
+                                    CornerRadius="8"
+                                    Margin="0,0,10,0"
+                                    Background="#F3F4F6"
+                                    VerticalAlignment="Top">
+                                <FontIcon Glyph="&#xea1f;" FontSize="18" Foreground="#548AC5"/>
+                            </Border>
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding TipText}"
+                                       FontSize="14"
+                                       Foreground="#4B5563"
+                                       TextWrapping="Wrap" />
+                        </Grid>
                     </StackPanel>
                 </Border>
             </StackPanel>
