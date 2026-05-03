@@ -117,6 +117,29 @@ public class StatisticsService
          return result.Select(x => (DateTime.Parse(x.Date), x.TotalSeconds));
     }
 
+    // Получить данные для графика приложения за неделю (по дням)
+    public IEnumerable<(DateTime Date, int TotalSeconds)> GetWeeklyActivityByApp(string appName)
+    {
+        using var conn = _db.CreateConnection();
+
+        var result = conn.Query<DailyActivityDto>(@"
+        SELECT d.Date, SUM(d.TotalDurationSeconds) as TotalSeconds
+        FROM DailyAppStats d
+        JOIN Applications a ON d.ApplicationId = a.Id
+        WHERE a.DisplayName = @appName
+          AND d.Date >= @startDate AND d.Date <= @endDate
+        GROUP BY d.Date
+        ORDER BY d.Date",
+            new
+            {
+                appName,
+                startDate = DateTime.Today.AddDays(-6).ToString("yyyy-MM-dd"),
+                endDate = DateTime.Today.ToString("yyyy-MM-dd")
+            });
+
+        return result.Select(x => (DateTime.Parse(x.Date), x.TotalSeconds));
+    }
+
     // Получить все категории
     public IEnumerable<Category> GetCategories()
     {

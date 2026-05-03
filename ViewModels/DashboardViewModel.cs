@@ -68,6 +68,10 @@ public partial class DashboardViewModel : INotifyPropertyChanged
         WeekActivityXAxes = Array.Empty<Axis>();
         WeekActivityYAxes = Array.Empty<Axis>();
 
+        AppWeekActivitySeries = Array.Empty<ISeries>();
+        AppWeekActivityXAxes = Array.Empty<Axis>();
+        AppWeekActivityYAxes = Array.Empty<Axis>();
+
         LoadData(); // начальная загрузка    
     }
 
@@ -122,9 +126,6 @@ public partial class DashboardViewModel : INotifyPropertyChanged
             return; // ВАЖНО
         }
 
-
-        TotalTodayTime = FormatTime(totalSecondsToday);
-        
         // Вычисление процента изменения
         if (previousTotalSeconds > 0)
         {
@@ -236,6 +237,32 @@ public partial class DashboardViewModel : INotifyPropertyChanged
             }
         };
 
+        var TotalApps = _statsService.GetAllApplications();
+
+        TotalApplications.Clear();
+        foreach (var app in TotalApps)
+        {
+            TotalApplications.Add(app);
+        }
+
+        if (mostFrequent.HasValue)
+        {
+            var appName = mostFrequent.Value.AppName;
+
+            SelectedApplication = TotalApplications
+                .FirstOrDefault(a => a.AppName == appName);
+        }
+
+        // fallback если не нашли или нет данных
+        SelectedApplication ??= TotalApplications.FirstOrDefault();
+
+        if (SelectedApplication != null)
+        {
+            LoadAppWeeklyData(SelectedApplication.AppName);
+        }
+
+        TotalTodayTime = FormatTime(totalSecondsToday);
+
         // Приложения за сегодня
         var apps = _statsService.GetAppsWithCategories(today, today.AddDays(1));
         Applications.Clear();
@@ -281,6 +308,69 @@ public partial class DashboardViewModel : INotifyPropertyChanged
         }
     }
 
+
+    private void LoadAppWeeklyData(string appName)
+    {
+        var today = DateTime.Today;
+
+        var weeklyData = _statsService.GetWeeklyActivityByApp(appName);
+
+        var weekValues = new List<int>();
+        var weekLabels = new List<string>();
+
+        for (int i = 6; i >= 0; i--)
+        {
+            var date = today.AddDays(-i);
+            var dayData = weeklyData.FirstOrDefault(d => d.Date.Date == date.Date);
+
+            weekValues.Add(dayData.TotalSeconds);
+            weekLabels.Add(GetDayName(date.DayOfWeek));
+        }
+
+        AppWeekActivitySeries = new ISeries[]
+        {
+        new LineSeries<int>
+        {
+            Values = weekValues,
+            YToolTipLabelFormatter = (chartPoint) =>
+                FullFormatTime((int)chartPoint.Coordinate.PrimaryValue),
+
+            Fill = new SolidColorPaint(SKColor.Parse("#E3F2FD")),
+            Stroke = new SolidColorPaint(SKColor.Parse("#2196F3")) { StrokeThickness = 3 },
+            GeometryFill = new SolidColorPaint(SKColor.Parse("#2196F3")),
+            GeometryStroke = new SolidColorPaint(SKColor.Parse("#2196F3")) { StrokeThickness = 2 },
+            GeometrySize = 10,
+            LineSmoothness = 0.3
+        }
+        };
+
+        AppWeekActivityXAxes = new Axis[]
+        {
+        new Axis
+        {
+            Labels = weekLabels,
+            LabelsRotation = 0,
+            LabelsPaint = new SolidColorPaint(SKColor.Parse("#6B7280")),
+            SeparatorsPaint = new SolidColorPaint(SKColor.Parse("#E5E7EB")) { StrokeThickness = 1 }
+        }
+        };
+
+        AppWeekActivityYAxes = new Axis[]
+        {
+        new Axis
+        {
+            MinLimit = 0,
+            Labeler = value => FullFormatTime(value),
+            LabelsPaint = new SolidColorPaint(SKColor.Parse("#6B7280")),
+            SeparatorsPaint = new SolidColorPaint(SKColor.Parse("#E5E7EB")) { StrokeThickness = 1 }
+        }
+        };
+
+        OnPropertyChanged(nameof(AppWeekActivitySeries));
+        OnPropertyChanged(nameof(AppWeekActivityXAxes));
+        OnPropertyChanged(nameof(AppWeekActivityYAxes));
+    }
+
     private static string FormatTime(int totalSeconds)
     {
         var ts = TimeSpan.FromSeconds(totalSeconds);
@@ -324,6 +414,10 @@ public partial class DashboardViewModel : INotifyPropertyChanged
     public ISeries[] WeekActivitySeries { get; private set; }
     public Axis[] WeekActivityXAxes { get; private set; }
     public Axis[] WeekActivityYAxes { get; private set; }
+
+    public ISeries[] AppWeekActivitySeries { get; set; }
+    public Axis[] AppWeekActivityXAxes { get; set; }
+    public Axis[] AppWeekActivityYAxes { get; set; }
 
     public string TotalTodayTitle
     {
@@ -405,6 +499,22 @@ public partial class DashboardViewModel : INotifyPropertyChanged
 
     public ObservableCollection<ApplicationUsage> Applications { get; set; }
     = new ObservableCollection<ApplicationUsage>();
+
+    public ObservableCollection<AppWithCategory> TotalApplications { get; } = new();
+
+    private AppWithCategory? _selectedApplication;
+
+    public AppWithCategory? SelectedApplication
+    {
+        get => _selectedApplication;
+        set
+        {
+            if (SetField(ref _selectedApplication, value) && value != null)
+            {
+                LoadAppWeeklyData(value.AppName);
+            }
+        }
+    }
 
     public string DailyGoalTitle
     {
