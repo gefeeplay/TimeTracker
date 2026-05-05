@@ -6,7 +6,7 @@
     xmlns:viewModels="using:TimeTracker.ViewModels"
     xmlns:lvc="using:LiveChartsCore.SkiaSharpView.WinUI"
     Background="#F8FAFC">
-
+ 
     <Grid>
 
         <Grid.RowDefinitions>
@@ -30,6 +30,11 @@
 
             <StackPanel Margin="20"
                         Spacing="15">
+                <StackPanel.ChildrenTransitions>
+                    <TransitionCollection>
+                        <RepositionThemeTransition />
+                    </TransitionCollection>
+                </StackPanel.ChildrenTransitions>
 
                 <!-- Карточки -->
                 <Grid>
@@ -82,16 +87,41 @@
                 <!-- График -->
                 <Border Background="White" CornerRadius="12" Padding="25" BorderBrush="#E5E5E5" BorderThickness="1">
                     <StackPanel Spacing="15">
-                        <TextBlock Text="{Binding WeekActivityTitle}" Style="{StaticResource SectionTitleTextStyle}"/>
+                        <!-- Шапка графика -->
+                        <Grid>
+                            <TextBlock Text="{Binding WeekActivityTitle}"
+                                       Style="{StaticResource SectionTitleTextStyle}"
+                                       VerticalAlignment="Center"/>
+                            <Button HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Click="ToggleWeekChart_Click"
+                                    Background="Transparent"
+                                    BorderThickness="0">
+                                <FontIcon FontSize="16" 
+                                          Foreground="Black"
+                                          Glyph="{Binding IsWeekChartVisible,  Converter={StaticResource BoolToGlyphConverter}}"/>
+                            </Button>
+                        </Grid>
                         <!-- График активности за неделю -->
-                        <lvc:CartesianChart 
-                            Height="300"
-                            Background="Transparent"
-                            Series="{Binding WeekActivitySeries}"
-                            XAxes="{Binding WeekActivityXAxes}"
-                            YAxes="{Binding WeekActivityYAxes}"
-                            TooltipPosition="Top"
-                            ZoomMode="None" />
+                        <Grid x:Name="WeekChartContainer"
+                                Height="300"
+                                Opacity="1"
+                                Visibility="{Binding IsWeekChartVisible, Converter={StaticResource BoolToVisibilityConverter}}"
+                                RenderTransformOrigin="0.5,0">
+                            
+                            <Grid.RenderTransform>
+                                <ScaleTransform x:Name="WeekChartScale" ScaleY="1"/>
+                            </Grid.RenderTransform>
+                            
+                            <lvc:CartesianChart 
+                                Height="300"
+                                Background="Transparent"
+                                Series="{Binding WeekActivitySeries}"
+                                XAxes="{Binding WeekActivityXAxes}"
+                                YAxes="{Binding WeekActivityYAxes}"
+                                TooltipPosition="Top"
+                                ZoomMode="None" />
+                        </Grid>
                     </StackPanel>
                 </Border>
                 <!-- Нижние блоки -->
@@ -184,26 +214,45 @@
                 <Border Background="White" CornerRadius="12" Padding="25" BorderBrush="#E5E5E5" BorderThickness="1">
                     <StackPanel Spacing="15">
                         <!-- Шапка графика -->
-                        <StackPanel Orientation="Horizontal" Spacing="5">
-                            <TextBlock Text="Активность " VerticalAlignment="Center" Style="{StaticResource SectionTitleTextStyle}"/>
-                            <ComboBox Width="180"
-                                      MaxDropDownHeight="200"
-                                      ItemsSource="{Binding TotalApplications}"
-                                      SelectedItem="{Binding SelectedApplication, Mode=TwoWay}"
-                                      Style="{StaticResource PrimaryComboBoxStyle}"
-                                      VerticalAlignment="Center">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <Image Source="{Binding IconPath}" Width="16" Height="16"/>
-                                            <TextBlock Text="{Binding AppName}"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
-                            <TextBlock Text=" (за неделю)" VerticalAlignment="Center" Style="{StaticResource SectionTitleTextStyle}"/>
-                        </StackPanel>
-                        <lvc:CartesianChart 
+                        <Grid>
+                            <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                                <TextBlock Text="Активность " Style="{StaticResource SectionTitleTextStyle}"/>
+                                <ComboBox Width="180"
+                                          MaxDropDownHeight="200"
+                                          ItemsSource="{Binding TotalApplications}"
+                                          SelectedItem="{Binding SelectedApplication, Mode=TwoWay}"
+                                          Style="{StaticResource PrimaryComboBoxStyle}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <Image Source="{Binding IconPath}" Width="16" Height="16"/>
+                                                <TextBlock Text="{Binding AppName}"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <TextBlock Text=" (за неделю)" Style="{StaticResource SectionTitleTextStyle}"/>
+                            </StackPanel>
+                            <Button HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Click="ToggleAppChart_Click"
+                                    Background="Transparent"
+                                    BorderThickness="0">
+                                <FontIcon FontSize="16" 
+                                          Foreground="Black"
+                                          Glyph="{Binding IsAppChartVisible,  Converter={StaticResource BoolToGlyphConverter}}"/>
+                            </Button>
+                        </Grid>
+                        <Grid x:Name="AppChartContainer"
+                                Height="300"
+                                Opacity="1"
+                                Visibility="{Binding IsWeekChartVisible, Converter={StaticResource BoolToVisibilityConverter}}"
+                                RenderTransformOrigin="0.5,0">
+
+                            <Grid.RenderTransform>
+                                <ScaleTransform x:Name="AppChartScale" ScaleY="1"/>
+                            </Grid.RenderTransform>
+                            <lvc:CartesianChart 
                                 Height="300"
                                 Background="Transparent"
                                 Series="{Binding AppWeekActivitySeries}"
@@ -211,6 +260,7 @@
                                 YAxes="{Binding AppWeekActivityYAxes}"
                                 TooltipPosition="Top"
                                 ZoomMode="None" />
+                        </Grid>
                     </StackPanel>
                 </Border>
 

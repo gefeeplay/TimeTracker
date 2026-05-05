@@ -16,6 +16,8 @@
             <converters:PageToStyleConverter x:Key="PageToStyleConverter"/>
             <converters:ZeroToCollapsedConverter x:Key="ZeroToCollapsedConverter"/>
             <converters:PeriodToStyleConverter x:Key="PeriodToStyleConverter"/>
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+            <converters:BoolToGlyphConverter x:Key="BoolToGlyphConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

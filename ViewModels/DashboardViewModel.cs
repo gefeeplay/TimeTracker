@@ -497,6 +497,13 @@ public partial class DashboardViewModel : INotifyPropertyChanged
         set => SetField(ref _weekActivityTitle, value);
     }
 
+    private bool _isWeekChartVisible = true;
+    public bool IsWeekChartVisible
+    {
+        get => _isWeekChartVisible;
+        set => SetField(ref _isWeekChartVisible, value);
+    }
+
     public ObservableCollection<ApplicationUsage> Applications { get; set; }
     = new ObservableCollection<ApplicationUsage>();
 
@@ -514,6 +521,13 @@ public partial class DashboardViewModel : INotifyPropertyChanged
                 LoadAppWeeklyData(value.AppName);
             }
         }
+    }
+
+    private bool _isAppChartVisible = true;
+    public bool IsAppChartVisible
+    {
+        get => _isAppChartVisible;
+        set => SetField(ref _isAppChartVisible, value);
     }
 
     public string DailyGoalTitle
