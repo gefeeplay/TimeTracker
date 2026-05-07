@@ -123,8 +123,9 @@ public partial class DashboardViewModel : INotifyPropertyChanged
 
             TipsText = "Начните отслеживать активность";
 
-            return; // ВАЖНО
+            return;
         }
+        TotalTodayTime = FormatTime(totalSecondsToday);
 
         // Вычисление процента изменения
         if (previousTotalSeconds > 0)
@@ -139,104 +140,15 @@ public partial class DashboardViewModel : INotifyPropertyChanged
         }
 
         // Самое частое приложение
-        var mostFrequent = _statsService.GetMostFrequentApp(today, today.AddDays(1));
-        if (mostFrequent.HasValue)
-        {
-            MostFrequentCategory = mostFrequent.Value.AppName;
-            MostFrequentSeconds = mostFrequent.Value.TotalSeconds;
-            MostFrequentIcon = mostFrequent.Value.IconPath!;
-            
-            var totalSeconds = _statsService.GetTotalTimeForDate(today);
-            if (totalSeconds > 0)
-            {
-                var percent = (double)MostFrequentSeconds / totalSeconds * 100;
-                MostFrequentDescription = $"{percent:F0}% от общего времени";
-            }
-            else
-            {
-                MostFrequentDescription = "Нет данных";
-            }
-        }
-        else
-        {
-            MostFrequentCategory = "Нет данных";
-            MostFrequentDescription = "Начните использовать приложение";
-        }
+        LoadMostFrequentApp(today);
 
         // Количество переключений окон (сессий)
-        var switchesCount = _statsService.GetWindowSwitchesCount(today, today.AddDays(1));
-        WindowSwitchesCount = switchesCount.ToString();
-        int averageSeconds = switchesCount > 0
-            ? Math.Max(1, totalSecondsToday / switchesCount)
-            : 0;
-        string timeText;
-        if (averageSeconds >= 3600) // Больше часа
-        {
-            timeText = $"{averageSeconds / 3600} часа {averageSeconds / 60} минут";
-        }
-        else if (averageSeconds >= 60) // Больше 1 минуты
-        {
-            timeText = $"{averageSeconds / 60} минут";
-        }
-        else
-        {
-            timeText = $"{averageSeconds} секунд";
-        }
-        WindowSwitchesDescription = switchesCount > 0
-            ? $"В среднем раз в {timeText}"
-            : "Нет данных";
+        LoadWindowSwitches(today, totalSecondsToday);
 
-        // Данные для графика за неделю
-        var weeklyData = _statsService.GetWeeklyActivity();
-        var weekValues = new List<int>();
-        var weekLabels = new List<string>();
+       // Данные для графика активности
+        LoadWeeklyActivityData();
 
-        for (int i = 6; i >= 0; i--)
-        {
-            var date = today.AddDays(-i);
-            var dayData = weeklyData.FirstOrDefault(d => d.Date.Date == date.Date);
-            weekValues.Add(dayData.TotalSeconds);
-            weekLabels.Add(GetDayName(date.DayOfWeek));
-        }
-
-        // Обновление серии графика
-        WeekActivitySeries = new ISeries[]
-        {
-            new LineSeries<int>
-            {
-                Values = weekValues,
-                YToolTipLabelFormatter = (chartPoint) =>
-                    FullFormatTime((int)chartPoint.Coordinate.PrimaryValue),
-                Fill = new SolidColorPaint(SKColor.Parse("#E3F2FD")),
-                Stroke = new SolidColorPaint(SKColor.Parse("#2196F3")) { StrokeThickness = 3 },
-                GeometryFill = new SolidColorPaint(SKColor.Parse("#2196F3")),
-                GeometryStroke = new SolidColorPaint(SKColor.Parse("#2196F3")) { StrokeThickness = 2 },
-                GeometrySize = 10,
-                LineSmoothness = 0.3
-            }
-        };
-
-        WeekActivityXAxes = new Axis[]
-        {
-            new Axis
-            {
-                Labels = weekLabels,
-                LabelsRotation = 0,
-                LabelsPaint = new SolidColorPaint(SKColor.Parse("#6B7280")),
-                SeparatorsPaint = new SolidColorPaint(SKColor.Parse("#E5E7EB")) { StrokeThickness = 1 }
-            }
-        };
-        WeekActivityYAxes = new Axis[]
-        {
-            new Axis
-            {
-                MinLimit = 0,
-                Labeler = value => FullFormatTime(value),
-                LabelsPaint = new SolidColorPaint(SKColor.Parse("#6B7280")),
-                SeparatorsPaint = new SolidColorPaint(SKColor.Parse("#E5E7EB")) { StrokeThickness = 1 }
-            }
-        };
-
+        // Все приложения для второго графика
         var TotalApps = _statsService.GetAllApplications();
 
         TotalApplications.Clear();
@@ -245,23 +157,14 @@ public partial class DashboardViewModel : INotifyPropertyChanged
             TotalApplications.Add(app);
         }
 
-        if (mostFrequent.HasValue)
-        {
-            var appName = mostFrequent.Value.AppName;
-
-            SelectedApplication = TotalApplications
-                .FirstOrDefault(a => a.AppName == appName);
-        }
-
+        SelectDefaultApplication();
         // fallback если не нашли или нет данных
         SelectedApplication ??= TotalApplications.FirstOrDefault();
-
+        // Данные для графика конкретного приложения
         if (SelectedApplication != null)
         {
             LoadAppWeeklyData(SelectedApplication.AppName);
         }
-
-        TotalTodayTime = FormatTime(totalSecondsToday);
 
         // Приложения за сегодня
         var apps = _statsService.GetAppsWithCategories(today, today.AddDays(1));
@@ -277,37 +180,44 @@ public partial class DashboardViewModel : INotifyPropertyChanged
         }
 
         // Дневная цель
-        var goalPercent = Math.Min(100, (int)((double)totalSecondsToday / DAILY_GOAL_SECONDS * 100));
-        var remainingSeconds = DAILY_GOAL_SECONDS - totalSecondsToday;
-        
-        DailyGoalPercentValue = goalPercent;
-        DailyGoalPercent = $"{goalPercent}%";
-        
-        if (remainingSeconds > 0)
-        {
-            DailyGoalDescription = $"Осталось {FormatTime(remainingSeconds)} до лимита";
-        }
-        else
-        {
-            DailyGoalDescription = "Дневная цель достигнута!";
-        }
+        LoadDailyGoal(totalSecondsToday);
 
         // Советы
-        if (totalSecondsToday > DAILY_GOAL_SECONDS)
-        {
-            TipsText = "Вы превысили дневную цель. Постарайтесь сделать перерывы и отдохнуть.";
-        }
-        else if (apps.Any())
-        {
-            var topApp = apps.First();
-            TipsText = $"Сегодня вы дольше всего использовали {topApp.AppName}. Попробуйте спланировать короткие перерывы для сохранения продуктивности.";
-        }
-        else
-        {
-            TipsText = "Начните отслеживать свое экранное время, просто работая за компьютером.";
-        }
+        LoadTips(totalSecondsToday, apps);
     }
 
+    private void LoadWeeklyActivityData()
+    {
+        // Данные для графика за неделю
+        var weeklyData = _statsService.GetWeeklyActivity();
+        var weekValues = new List<int>();
+        var weekLabels = new List<string>();
+        var today = DateTime.Today;
+
+        for (int i = 6; i >= 0; i--)
+        {
+            var date = today.AddDays(-i);
+            var dayData = weeklyData.FirstOrDefault(d => d.Date.Date == date.Date);
+            weekValues.Add(dayData.TotalSeconds);
+            weekLabels.Add(GetDayName(date.DayOfWeek));
+        }
+
+        // Обновление серии графика
+        ConfigureChart(
+         weekValues,
+         weekLabels,
+         out var series,
+         out var xAxes,
+         out var yAxes);
+
+        WeekActivitySeries = series;
+        WeekActivityXAxes = xAxes;
+        WeekActivityYAxes = yAxes;
+
+        OnPropertyChanged(nameof(WeekActivitySeries));
+        OnPropertyChanged(nameof(WeekActivityXAxes));
+        OnPropertyChanged(nameof(WeekActivityYAxes));
+    }
 
     private void LoadAppWeeklyData(string appName)
     {
@@ -327,48 +237,172 @@ public partial class DashboardViewModel : INotifyPropertyChanged
             weekLabels.Add(GetDayName(date.DayOfWeek));
         }
 
-        AppWeekActivitySeries = new ISeries[]
-        {
-        new LineSeries<int>
-        {
-            Values = weekValues,
-            YToolTipLabelFormatter = (chartPoint) =>
-                FullFormatTime((int)chartPoint.Coordinate.PrimaryValue),
+        ConfigureChart(
+        weekValues,
+        weekLabels,
+        out var series,
+        out var xAxes,
+        out var yAxes);
 
-            Fill = new SolidColorPaint(SKColor.Parse("#E3F2FD")),
-            Stroke = new SolidColorPaint(SKColor.Parse("#2196F3")) { StrokeThickness = 3 },
-            GeometryFill = new SolidColorPaint(SKColor.Parse("#2196F3")),
-            GeometryStroke = new SolidColorPaint(SKColor.Parse("#2196F3")) { StrokeThickness = 2 },
-            GeometrySize = 10,
-            LineSmoothness = 0.3
-        }
-        };
-
-        AppWeekActivityXAxes = new Axis[]
-        {
-        new Axis
-        {
-            Labels = weekLabels,
-            LabelsRotation = 0,
-            LabelsPaint = new SolidColorPaint(SKColor.Parse("#6B7280")),
-            SeparatorsPaint = new SolidColorPaint(SKColor.Parse("#E5E7EB")) { StrokeThickness = 1 }
-        }
-        };
-
-        AppWeekActivityYAxes = new Axis[]
-        {
-        new Axis
-        {
-            MinLimit = 0,
-            Labeler = value => FullFormatTime(value),
-            LabelsPaint = new SolidColorPaint(SKColor.Parse("#6B7280")),
-            SeparatorsPaint = new SolidColorPaint(SKColor.Parse("#E5E7EB")) { StrokeThickness = 1 }
-        }
-        };
+        AppWeekActivitySeries = series;
+        AppWeekActivityXAxes = xAxes;
+        AppWeekActivityYAxes = yAxes;
 
         OnPropertyChanged(nameof(AppWeekActivitySeries));
         OnPropertyChanged(nameof(AppWeekActivityXAxes));
         OnPropertyChanged(nameof(AppWeekActivityYAxes));
+    }
+
+    // Создание стилей графика
+    private void ConfigureChart(
+    List<int> values,
+    List<string> labels,
+    out ISeries[] series,
+    out Axis[] xAxes,
+    out Axis[] yAxes)
+    {
+        series = new ISeries[]
+        {
+            new LineSeries<int>
+            {
+                Values = values,
+                YToolTipLabelFormatter = chartPoint =>
+                    FullFormatTime((int)chartPoint.Coordinate.PrimaryValue),
+                Fill = new SolidColorPaint(SKColor.Parse("#E3F2FD")),
+                Stroke = new SolidColorPaint(SKColor.Parse("#2196F3")) { StrokeThickness = 3 },
+                GeometryFill = new SolidColorPaint(SKColor.Parse("#2196F3")),
+                GeometryStroke = new SolidColorPaint(SKColor.Parse("#2196F3")) { StrokeThickness = 2 },
+                GeometrySize = 10,
+                LineSmoothness = 0.3
+            }
+        };
+
+        xAxes = new Axis[]
+        {
+            new Axis
+            {
+                Labels = labels,
+                LabelsRotation = 0,
+                LabelsPaint = new SolidColorPaint(SKColor.Parse("#6B7280")),
+                SeparatorsPaint = new SolidColorPaint(SKColor.Parse("#E5E7EB")) { StrokeThickness = 1 }
+            }
+        };
+
+        yAxes = new Axis[]
+        {
+            new Axis
+            {
+                MinLimit = 0,
+                Labeler = value => FullFormatTime(value),
+                LabelsPaint = new SolidColorPaint(SKColor.Parse("#6B7280")),
+                SeparatorsPaint = new SolidColorPaint(SKColor.Parse("#E5E7EB")) { StrokeThickness = 1 }
+            }
+        };
+    }
+
+    private void LoadMostFrequentApp(DateTime today)
+    {
+        var mostFrequent = _statsService.GetMostFrequentApp(
+            today,
+            today.AddDays(1));
+
+        if (mostFrequent.HasValue)
+        {
+            MostFrequentCategory = mostFrequent.Value.AppName;
+            MostFrequentSeconds = mostFrequent.Value.TotalSeconds;
+            MostFrequentIcon = mostFrequent.Value.IconPath!;
+
+            var totalSeconds = _statsService.GetTotalTimeForDate(today);
+            if (totalSeconds > 0)
+            {
+                var percent = (double)MostFrequentSeconds / totalSeconds * 100;
+                MostFrequentDescription =$"{percent:F0}% от общего времени";
+            }
+            else MostFrequentDescription = "Нет данных";
+        }
+        else
+        {
+            MostFrequentCategory = "Нет данных";
+            MostFrequentDescription = "Начните использовать приложение";
+        }
+    }
+
+    private void LoadWindowSwitches(
+    DateTime today,
+    int totalSecondsToday)
+    {
+        var switchesCount = _statsService.GetWindowSwitchesCount(
+            today,
+            today.AddDays(1));
+
+        WindowSwitchesCount = switchesCount.ToString();
+
+        int averageSeconds = switchesCount > 0
+            ? Math.Max(1, totalSecondsToday / switchesCount)
+            : 0;
+
+        string timeText;
+
+        if (averageSeconds >= 3600)
+            timeText = $"{averageSeconds / 3600} часа {averageSeconds / 60} минут";
+        
+        else if (averageSeconds >= 60)
+            timeText = $"{averageSeconds / 60} минут";
+        
+        else timeText = $"{averageSeconds} секунд";
+
+        WindowSwitchesDescription = switchesCount > 0
+            ? $"В среднем раз в {timeText}"
+            : "Нет данных";
+    }
+
+    private void SelectDefaultApplication()
+    {
+        var today = DateTime.Today;
+
+        var mostFrequent = _statsService.GetMostFrequentApp(
+            today,
+            today.AddDays(1));
+
+        if (mostFrequent.HasValue)
+        {
+            SelectedApplication = TotalApplications
+                .FirstOrDefault(a => a.AppName == mostFrequent.Value.AppName);
+        }
+        SelectedApplication ??= TotalApplications.FirstOrDefault();
+    }
+
+    private void LoadDailyGoal(int totalSecondsToday)
+    {
+        var goalPercent = Math.Min(
+            100,
+            (int)((double)totalSecondsToday / DAILY_GOAL_SECONDS * 100));
+        var remainingSeconds = DAILY_GOAL_SECONDS - totalSecondsToday;
+
+        DailyGoalPercentValue = goalPercent;
+        DailyGoalPercent = $"{goalPercent}%";
+
+        if (remainingSeconds > 0)
+            DailyGoalDescription = $"Осталось {FormatTime(remainingSeconds)} до лимита";
+        else
+            DailyGoalDescription = "Дневная цель достигнута!";
+    }
+
+    private void LoadTips(
+    int totalSecondsToday,
+    IEnumerable<(string AppName, string CategoryName, int TotalSeconds, string? IconPath)> apps)
+    {
+        if (totalSecondsToday > DAILY_GOAL_SECONDS)
+            TipsText = "Вы превысили дневную цель. Постарайтесь сделать перерывы и отдохнуть.";
+        else if (apps.Any())
+        {
+            var topApp = apps.First();
+            TipsText =
+                $"Сегодня вы дольше всего использовали {topApp.AppName}. " +
+                $"Попробуйте спланировать короткие перерывы для сохранения продуктивности.";
+        }
+        else
+            TipsText = "Начните отслеживать свое экранное время, просто работая за компьютером.";
     }
 
     private static string FormatTime(int totalSeconds)
