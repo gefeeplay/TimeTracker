@@ -1,15 +1,18 @@
 ﻿using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml;
 using SkiaSharp;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using TimeTracker.Models;
 using TimeTracker.Monitoring;
 using TimeTracker.Services;
@@ -21,6 +24,8 @@ public partial class DashboardViewModel : INotifyPropertyChanged
     private readonly ActivityTracker _activityTracker;
     private readonly UsageService _usageService;
     private readonly StatisticsService _statsService;
+    private readonly AiInsightsService _aiInsightsService;
+    private readonly AiCacheService _aiCacheService;
 
     private readonly DispatcherQueue _dispatcher;
 
@@ -51,16 +56,27 @@ public partial class DashboardViewModel : INotifyPropertyChanged
     private string _tipsTitle = "Умные советы";
     private string _tipsText = "Начните отслеживать активность";
 
+    private DateTime _lastTipsUpdate = DateTime.MinValue;
+    private string _cachedTips = "";
+    private bool _isLoadingTips;
+
     // Константа дневной цели в секундах (4 часов)
     private const int DAILY_GOAL_SECONDS = 4 * 60 * 60;
 
-    public DashboardViewModel(ActivityTracker activityTracker, UsageService usageService, StatisticsService statisticsService, DispatcherQueue dispatcher)
+    public DashboardViewModel(ActivityTracker activityTracker,
+        UsageService usageService,
+        StatisticsService statisticsService,
+        DispatcherQueue dispatcher,
+        AiInsightsService aiInsightsService,
+        AiCacheService aiCacheService)
     {
 
         _activityTracker = activityTracker;
         _usageService = usageService;
         _dispatcher = dispatcher;
         _statsService = statisticsService;
+        _aiInsightsService = aiInsightsService;
+        _aiCacheService = aiCacheService;
 
         _activityTracker.OnStatsUpdated += HandleStatsUpdated;
 
@@ -72,7 +88,7 @@ public partial class DashboardViewModel : INotifyPropertyChanged
         AppWeekActivityXAxes = Array.Empty<Axis>();
         AppWeekActivityYAxes = Array.Empty<Axis>();
 
-        LoadData(); // начальная загрузка    
+        _ = LoadDataAsync(); // начальная загрузка 
     }
 
     private void HandleStatsUpdated()
@@ -80,7 +96,7 @@ public partial class DashboardViewModel : INotifyPropertyChanged
         //важно: UI поток!
         _dispatcher.TryEnqueue(() =>
         {
-            LoadData();
+            _ = LoadDataAsync();
         });
     }
 
@@ -93,97 +109,108 @@ public partial class DashboardViewModel : INotifyPropertyChanged
     {
         App.StatisticsService.RecalculateDailyStats(DateTime.Today);
 
-        LoadData();
+        _ = LoadDataAsync();
     }
 
-    private void LoadData()
+    private async Task LoadDataAsync()
     {
-        var today = DateTime.Today.Date;
-        System.Diagnostics.Debug.WriteLine("сегодня: " + today);
-        var weekStart = today.AddDays(-6);
 
-        // Общее время сегодня
-        var totalSecondsToday = _statsService.GetTotalTimeForDate(today);
-        System.Diagnostics.Debug.WriteLine("Всего секунд сегодня: " + totalSecondsToday);
-        var previousTotalSeconds = _statsService.GetTotalTimeForDate(today.AddDays(-1));
-
-        // если нет данных — просто показываем 0
-        if (totalSecondsToday == 0)
+        try
         {
-            TotalTodayTime = "0м";
-            TotalTodayDelta = "Нет данных";
+            var today = DateTime.Today.Date;
+            System.Diagnostics.Debug.WriteLine("сегодня: " + today);
+            var weekStart = today.AddDays(-6);
 
-            MostFrequentCategory = "Нет данных";
-            MostFrequentDescription = "Начните использовать приложение";
+            // Общее время сегодня
+            var totalSecondsToday = _statsService.GetTotalTimeForDate(today);
+            System.Diagnostics.Debug.WriteLine("Всего секунд сегодня: " + totalSecondsToday);
+            var previousTotalSeconds = _statsService.GetTotalTimeForDate(today.AddDays(-1));
 
-            WindowSwitchesCount = "0";
-            WindowSwitchesDescription = "Нет данных";
+            // если нет данных — просто показываем 0
+            if (totalSecondsToday == 0)
+            {
+                TotalTodayTime = "0м";
+                TotalTodayDelta = "Нет данных";
 
+                MostFrequentCategory = "Нет данных";
+                MostFrequentDescription = "Начните использовать приложение";
+
+                WindowSwitchesCount = "0";
+                WindowSwitchesDescription = "Нет данных";
+
+                Applications.Clear();
+
+                TipsText = "Начните отслеживать активность";
+
+                return;
+            }
+            TotalTodayTime = FormatTime(totalSecondsToday);
+
+            // Вычисление процента изменения
+            if (previousTotalSeconds > 0)
+            {
+                var delta = ((double)(totalSecondsToday - previousTotalSeconds) / previousTotalSeconds) * 100;
+                TotalTodayDelta = delta >= 0 ? $"+{delta:F0}%" : $"{delta:F0}%";
+                BoolTodayDelta = delta >= 0;
+            }
+            else
+            {
+                TotalTodayDelta = totalSecondsToday > 0 ? "Новый день" : "Нет данных";
+            }
+
+            // Самое частое приложение
+            LoadMostFrequentApp(today);
+
+            // Количество переключений окон (сессий)
+            LoadWindowSwitches(today, totalSecondsToday);
+
+            // Данные для графика активности
+            LoadWeeklyActivityData();
+
+            // Все приложения для второго графика
+            var TotalApps = _statsService.GetAllApplications();
+
+            TotalApplications.Clear();
+            foreach (var app in TotalApps)
+            {
+                TotalApplications.Add(app);
+            }
+
+            SelectDefaultApplication();
+            // fallback если не нашли или нет данных
+            SelectedApplication ??= TotalApplications.FirstOrDefault();
+            // Данные для графика конкретного приложения
+            if (SelectedApplication != null)
+            {
+                LoadAppWeeklyData(SelectedApplication.AppName);
+            }
+
+            // Приложения за сегодня
+            var apps = _statsService.GetAppsWithCategories(today, today.AddDays(1));
             Applications.Clear();
+            foreach (var app in apps.Take(10))
+            {
+                Applications.Add(new ApplicationUsage(
+                    app.AppName,
+                    app.CategoryName,
+                    FormatTime(app.TotalSeconds),
+                    app.IconPath
+                ));
+            }
 
-            TipsText = "Начните отслеживать активность";
+            // Дневная цель
+            LoadDailyGoal(totalSecondsToday);
 
-            return;
+            // Советы
+            //LoadTips(totalSecondsToday, apps);
+            await LoadTipsAsync(totalSecondsToday, apps, WindowSwitchesCount);
         }
-        TotalTodayTime = FormatTime(totalSecondsToday);
-
-        // Вычисление процента изменения
-        if (previousTotalSeconds > 0)
+        catch (Exception ex)
         {
-            var delta = ((double)(totalSecondsToday - previousTotalSeconds) / previousTotalSeconds) * 100;
-            TotalTodayDelta = delta >= 0 ? $"+{delta:F0}%" : $"{delta:F0}%";
-            BoolTodayDelta = delta >= 0;
+            Debug.WriteLine(ex);
+
+            TipsText = "Ошибка загрузки данных.";
         }
-        else
-        {
-            TotalTodayDelta = totalSecondsToday > 0 ? "Новый день" : "Нет данных";
-        }
-
-        // Самое частое приложение
-        LoadMostFrequentApp(today);
-
-        // Количество переключений окон (сессий)
-        LoadWindowSwitches(today, totalSecondsToday);
-
-       // Данные для графика активности
-        LoadWeeklyActivityData();
-
-        // Все приложения для второго графика
-        var TotalApps = _statsService.GetAllApplications();
-
-        TotalApplications.Clear();
-        foreach (var app in TotalApps)
-        {
-            TotalApplications.Add(app);
-        }
-
-        SelectDefaultApplication();
-        // fallback если не нашли или нет данных
-        SelectedApplication ??= TotalApplications.FirstOrDefault();
-        // Данные для графика конкретного приложения
-        if (SelectedApplication != null)
-        {
-            LoadAppWeeklyData(SelectedApplication.AppName);
-        }
-
-        // Приложения за сегодня
-        var apps = _statsService.GetAppsWithCategories(today, today.AddDays(1));
-        Applications.Clear();
-        foreach (var app in apps.Take(10))
-        {
-            Applications.Add(new ApplicationUsage(
-                app.AppName,
-                app.CategoryName,
-                FormatTime(app.TotalSeconds),
-                app.IconPath
-            ));
-        }
-
-        // Дневная цель
-        LoadDailyGoal(totalSecondsToday);
-
-        // Советы
-        LoadTips(totalSecondsToday, apps);
     }
 
     private void LoadWeeklyActivityData()
@@ -403,6 +430,92 @@ public partial class DashboardViewModel : INotifyPropertyChanged
         }
         else
             TipsText = "Начните отслеживать свое экранное время, просто работая за компьютером.";
+    }
+
+    private async Task LoadTipsAsync(
+    int totalSecondsToday,
+    IEnumerable<(string AppName,
+                string CategoryName,
+                int TotalSeconds,
+                string? IconPath)> apps,
+    string? windowSwitches)
+    {
+
+        if (_isLoadingTips)
+            return;
+
+        _isLoadingTips = true;
+
+        try
+        {
+            // Сначала пытаемся взять кэш
+            var cache = _aiCacheService.Get("dashboard");
+
+            if (cache != null &&
+                DateTime.Now - cache.UpdatedAt
+                    < TimeSpan.FromMinutes(30))
+            {
+                TipsText = cache.Content;
+                return;
+            }
+
+            // Нет данных
+            if (!apps.Any())
+            {
+                TipsText = "Начните отслеживать активность.";
+                return;
+            }
+
+            // Слишком мало данных
+            if (totalSecondsToday < 300)
+            {
+                TipsText = "Мало данных. Для анализа требуется минимум 5 минут.";
+                return;
+            }
+
+            var topApp = apps.First();
+
+            var context = new DashboardAiContext
+            {
+                TotalSecondsToday = totalSecondsToday,
+                MostFrequentApp = topApp.AppName,
+                MostFrequentTime = topApp.TotalSeconds,
+                WindowSwitches = windowSwitches ?? "0",
+                DailyGoalPercent = DailyGoalPercentValue,
+                GoalExceeded = totalSecondsToday > DAILY_GOAL_SECONDS
+            };
+
+            TipsText = "Анализируем активность...";
+
+            var aiText = await _aiInsightsService.GenerateTipsAsync(context);
+
+            TipsText = aiText;
+
+            // Сохраняем в SQLite cache
+            _aiCacheService.Save(
+                "dashboard",
+                aiText);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex);
+
+            // fallback на старый cache
+            var cache = _aiCacheService.Get("dashboard");
+
+            if (cache != null)
+            {
+                TipsText = cache.Content;
+            }
+            else
+            {
+                TipsText = "Не удалось загрузить рекомендации.";
+            }
+        }
+        finally
+        {
+            _isLoadingTips = false;
+        }
     }
 
     private static string FormatTime(int totalSeconds)

@@ -18,7 +18,7 @@ public sealed partial class DashboardPage : Page
     {
         InitializeComponent();
         
-        ViewModel = new DashboardViewModel(App.ActivityTracker, App.UsageService, App.StatisticsService, this.DispatcherQueue);
+        ViewModel = new DashboardViewModel(App.ActivityTracker, App.UsageService, App.StatisticsService, this.DispatcherQueue, App.aiInsightsService, App.aiCacheService);
         this.DataContext = ViewModel;
 
         this.Unloaded += OnUnloaded;
