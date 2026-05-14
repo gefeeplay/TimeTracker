@@ -44,3 +44,19 @@ public class AppWithCategory
 
     public string? IconPath { get; set; }
 }
+
+// Для отправки контекста LLM
+public class DashboardAiContext
+{
+    public int TotalSecondsToday { get; set; }
+
+    public string MostFrequentApp{ get; set; } = "";
+
+    public int MostFrequentTime { get; set; }
+
+    public string WindowSwitches { get; set; } = "";
+
+    public double DailyGoalPercent { get; set; }
+
+    public bool GoalExceeded { get; set; }
+}

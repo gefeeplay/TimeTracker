@@ -1,6 +1,8 @@
 ﻿using Microsoft.Data.Sqlite;
 using System;
 
+namespace TimeTracker.Data;
+
 public static class DbInitializer
 {
     public static void Initialize(string dbPath)
@@ -75,6 +77,14 @@ public static class DbInitializer
             UpdatedAt DATETIME NOT NULL,
             UNIQUE(ApplicationId, Date),
             FOREIGN KEY (ApplicationId) REFERENCES Applications(Id)
+        );
+
+        CREATE TABLE IF NOT EXISTS AiInsightsCache
+        (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            Scope TEXT NOT NULL UNIQUE,
+            Content TEXT NOT NULL,
+            UpdatedAt DATETIME NOT NULL
         );
         ";
 

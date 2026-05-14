@@ -2,6 +2,8 @@
 using Microsoft.Data.Sqlite;
 using System.Collections.Generic;
 
+namespace TimeTracker.Data;
+
 public class Database
 {
     private readonly string _connectionString;
