@@ -57,7 +57,6 @@ public partial class DashboardViewModel : INotifyPropertyChanged
     private string _tipsText = "Начните отслеживать активность";
 
     private DateTime _lastTipsUpdate = DateTime.MinValue;
-    private string _cachedTips = "";
     private bool _isLoadingTips;
 
     // Константа дневной цели в секундах (4 часов)
