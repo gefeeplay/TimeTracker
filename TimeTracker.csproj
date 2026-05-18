@@ -33,6 +33,7 @@
 </ItemGroup>
 <ItemGroup>
   <None Remove="Views\ApplicationsPage.xaml" />
+  <None Remove="Views\SettingsPage.xaml" />
   <None Remove="Views\TrayIconView.xaml" />
 </ItemGroup>
 
@@ -65,6 +66,11 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260317003" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.2" />
     <PackageReference Include="System.Drawing.Common" Version="10.0.7" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\SettingsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="Views\TrayIconView.xaml">

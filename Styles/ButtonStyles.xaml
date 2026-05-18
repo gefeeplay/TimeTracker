@@ -10,6 +10,30 @@
             <SolidColorBrush x:Key="ComboBoxForegroundPointerOver" Color="White" />
             <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="#548AC5" />
             <!-- И остальные ресурсы сюда -->
+
+            <!-- NumberBox / TextBox / PasswordBox -->
+            <SolidColorBrush x:Key="TextControlBackground" Color="#548AC5"/>
+            <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#94A3B8"/>
+            <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#94A3B8"/>
+            <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#94A3B8"/>
+            <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#94A3B8"/>
+            <SolidColorBrush x:Key="TextControlForeground" Color="White"/>
+            <SolidColorBrush x:Key="TextControlForegroundPointerOver" Color="White"/>
+            <SolidColorBrush x:Key="TextControlForegroundFocused" Color="White"/>
+            <SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="#DCE8F7"/>
+
+
+            <!-- ToggleSwitch -->
+
+            <SolidColorBrush x:Key="ToggleSwitchFillOff" Color="#CBD5E1"/>
+            <SolidColorBrush x:Key="ToggleSwitchFillOffPointerOver" Color="#94A3B8"/>
+            <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="#548AC5"/>
+            <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#6199D6"/>
+            <SolidColorBrush x:Key="ToggleSwitchStrokeOff" Color="#CBD5E1"/>
+            <SolidColorBrush x:Key="ToggleSwitchStrokeOn" Color="#548AC5"/>
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOff" Color="White"/>
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOn" Color="White"/>
+
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 
@@ -243,6 +267,31 @@
         <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="MinWidth" Value="150"/>
 
+    </Style>
+
+    <Style x:Key="PrimaryToggleSwitchStyle"
+       TargetType="ToggleSwitch">
+
+        <Setter Property="Margin" Value="0,4,0,0"/>
+    </Style>
+
+    <Style x:Key="PrimaryPasswordBoxStyle"
+       TargetType="PasswordBox">
+       
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="40,6,10,6"/>
+        
+    </Style>
+
+    <Style x:Key="PrimaryNumberBoxStyle"
+       TargetType="NumberBox">
+        
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="SpinButtonPlacementMode" Value="Inline"/>
+        
     </Style>
 
     <!-- ============================= -->
