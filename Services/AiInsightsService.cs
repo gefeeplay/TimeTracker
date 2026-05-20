@@ -15,26 +15,20 @@ namespace TimeTracker.Services;
 public class AiInsightsService
 {
     private readonly HttpClient _httpClient;
-    private readonly string _apiKey;
+    private readonly SettingsService _settingsService;
     private const string MODEL =
         "deepseek/deepseek-v4-flash:free";
     private const string ENDPOINT =
         "https://openrouter.ai/api/v1/chat/completions";
 
-    public AiInsightsService()
+    public AiInsightsService(SettingsService settingsService)
     {
-        _apiKey = Environment.GetEnvironmentVariable(
-           "OPENROUTER_API_KEY")
-           ?? throw new InvalidOperationException(
-               "OPENROUTER_API_KEY not found");
+        _settingsService = settingsService;
 
         _httpClient = new HttpClient
         {
             Timeout = TimeSpan.FromSeconds(15)
         };
-
-        _httpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", _apiKey);
 
         _httpClient.DefaultRequestHeaders.Add(
             "X-Title",
@@ -43,6 +37,11 @@ public class AiInsightsService
 
     public async Task<string> GenerateTipsAsync(DashboardAiContext context)
     {
+        var apiKey = GetApiKey();
+
+        _httpClient.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", apiKey);
+
         try {
             var prompt =
             $"""
@@ -128,5 +127,11 @@ public class AiInsightsService
             return "AI-рекомендации временно недоступны.";
         }
     }
-    
+    private string GetApiKey()
+    {
+        return _settingsService.Get("OpenRouterApiKey")
+            ?? throw new InvalidOperationException(
+                "Установите API ключ в настройках");
+    }
+
 }

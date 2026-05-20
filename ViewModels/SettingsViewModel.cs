@@ -4,11 +4,14 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows.Input;
+using TimeTracker.Services;
 
 namespace TimeTracker.ViewModels;
 
 public class SettingsViewModel : INotifyPropertyChanged
 {
+    private readonly SettingsService _settingsService;
+
     private int _dailyLimitHours;
     private string _apiKey = string.Empty;
     private bool _isAutoStartEnabled;
@@ -67,8 +70,9 @@ public class SettingsViewModel : INotifyPropertyChanged
 
     public ICommand SaveCommand { get; }
 
-    public SettingsViewModel()
+    public SettingsViewModel(SettingsService settingsService)
     {
+        _settingsService = settingsService;
         LoadCommand = new RelayCommand(LoadSettings);
         SaveCommand = new RelayCommand(SaveSettings);
 
@@ -77,21 +81,29 @@ public class SettingsViewModel : INotifyPropertyChanged
 
     private void LoadSettings()
     {
-        // TODO:
-        // Загрузка настроек из БД / config / json
+        DailyLimitHours =
+            _settingsService.GetInt("DailyGoalHours", 4);
 
-        DailyLimitHours = 4;
-        ApiKey = "";
-        IsAutoStartEnabled = false;
+        ApiKey =
+            _settingsService.Get("OpenRouterApiKey") ?? "";
+
+        IsAutoStartEnabled =
+            _settingsService.GetBool("AutoStartEnabled");
     }
 
     private void SaveSettings()
     {
-        // TODO:
-        // Сохранение настроек
+        _settingsService.Set(
+            "DailyGoalHours",
+            DailyLimitHours.ToString());
 
-        // Пример:
-        // _settingsService.Save(...);
+        _settingsService.Set(
+            "OpenRouterApiKey",
+            ApiKey);
+
+        _settingsService.Set(
+            "AutoStartEnabled",
+            IsAutoStartEnabled.ToString());
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

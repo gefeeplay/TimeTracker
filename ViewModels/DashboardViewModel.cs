@@ -26,6 +26,7 @@ public partial class DashboardViewModel : INotifyPropertyChanged
     private readonly StatisticsService _statsService;
     private readonly AiInsightsService _aiInsightsService;
     private readonly AiCacheService _aiCacheService;
+    private readonly SettingsService _settingsService;
 
     private readonly DispatcherQueue _dispatcher;
 
@@ -52,6 +53,7 @@ public partial class DashboardViewModel : INotifyPropertyChanged
     private string _dailyGoalDescription = NO_DATA;
     private string _dailyGoalPercent = "0%";
     private double _dailyGoalPercentValue = 0;
+    private int _dailyGoalSeconds = 0;
 
     private string _tipsTitle = "Умные советы";
     private string _tipsText = "Начните отслеживать активность";
@@ -59,15 +61,13 @@ public partial class DashboardViewModel : INotifyPropertyChanged
     private DateTime _lastTipsUpdate = DateTime.MinValue;
     private bool _isLoadingTips;
 
-    // Константа дневной цели в секундах (4 часов)
-    private const int DAILY_GOAL_SECONDS = 4 * 60 * 60;
-
     public DashboardViewModel(ActivityTracker activityTracker,
         UsageService usageService,
         StatisticsService statisticsService,
         DispatcherQueue dispatcher,
         AiInsightsService aiInsightsService,
-        AiCacheService aiCacheService)
+        AiCacheService aiCacheService,
+        SettingsService settingsService)
     {
 
         _activityTracker = activityTracker;
@@ -87,7 +87,10 @@ public partial class DashboardViewModel : INotifyPropertyChanged
         AppWeekActivityXAxes = Array.Empty<Axis>();
         AppWeekActivityYAxes = Array.Empty<Axis>();
 
+        _settingsService = settingsService;
+
         _ = LoadDataAsync(); // начальная загрузка 
+        
     }
 
     private void HandleStatsUpdated()
@@ -119,6 +122,10 @@ public partial class DashboardViewModel : INotifyPropertyChanged
             var today = DateTime.Today.Date;
             System.Diagnostics.Debug.WriteLine("сегодня: " + today);
             var weekStart = today.AddDays(-6);
+
+            // Дневная цель
+            var goalHours = _settingsService.GetInt("DailyGoalHours", 4);
+            DailyGoalSeconds = goalHours * 60 * 60;
 
             // Общее время сегодня
             var totalSecondsToday = _statsService.GetTotalTimeForDate(today);
@@ -402,8 +409,8 @@ public partial class DashboardViewModel : INotifyPropertyChanged
     {
         var goalPercent = Math.Min(
             100,
-            (int)((double)totalSecondsToday / DAILY_GOAL_SECONDS * 100));
-        var remainingSeconds = DAILY_GOAL_SECONDS - totalSecondsToday;
+            (int)((double)totalSecondsToday / DailyGoalSeconds * 100));
+        var remainingSeconds = DailyGoalSeconds - totalSecondsToday;
 
         DailyGoalPercentValue = goalPercent;
         DailyGoalPercent = $"{goalPercent}%";
@@ -418,7 +425,7 @@ public partial class DashboardViewModel : INotifyPropertyChanged
     int totalSecondsToday,
     IEnumerable<(string AppName, string CategoryName, int TotalSeconds, string? IconPath)> apps)
     {
-        if (totalSecondsToday > DAILY_GOAL_SECONDS)
+        if (totalSecondsToday > DailyGoalSeconds)
             TipsText = "Вы превысили дневную цель. Постарайтесь сделать перерывы и отдохнуть.";
         else if (apps.Any())
         {
@@ -481,7 +488,7 @@ public partial class DashboardViewModel : INotifyPropertyChanged
                 MostFrequentTime = topApp.TotalSeconds,
                 WindowSwitches = windowSwitches ?? "0",
                 DailyGoalPercent = DailyGoalPercentValue,
-                GoalExceeded = totalSecondsToday > DAILY_GOAL_SECONDS
+                GoalExceeded = totalSecondsToday > DailyGoalSeconds
             };
 
             TipsText = "Анализируем активность...";
@@ -698,6 +705,12 @@ public partial class DashboardViewModel : INotifyPropertyChanged
     {
         get => _dailyGoalPercentValue;
         set => SetField(ref _dailyGoalPercentValue, value);
+    }
+
+    public int DailyGoalSeconds
+    {
+        get => _dailyGoalSeconds;
+        set => SetField(ref _dailyGoalSeconds, value);
     }
 
     public string TipsTitle

@@ -86,6 +86,11 @@ public static class DbInitializer
             Content TEXT NOT NULL,
             UpdatedAt DATETIME NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS Settings
+        (
+            Key TEXT PRIMARY KEY,
+            Value TEXT NOT NULL
+        );
         ";
 
         cmd.ExecuteNonQuery();

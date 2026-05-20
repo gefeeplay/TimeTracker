@@ -23,8 +23,9 @@ namespace TimeTracker
         public static StatisticsService StatisticsService { get; private set; } = null!;
         public static CleanupService CleanupService { get; private set; } = null!;
         public static ActivityTracker ActivityTracker { get; private set; } = null!;
-        public static AiInsightsService aiInsightsService { get; private set; } = null!;
-        public static AiCacheService aiCacheService { get; private set; } = null!;
+        public static AiInsightsService AiInsightsService { get; private set; } = null!;
+        public static AiCacheService AiCacheService { get; private set; } = null!;
+        public static SettingsService SettingsService { get; private set; } = null!;
 
         public App()
         {
@@ -48,8 +49,9 @@ namespace TimeTracker
             StatisticsService = new StatisticsService(Database);
             CleanupService = new CleanupService(Database);
             ActivityTracker = new ActivityTracker(UsageService);
-            aiInsightsService = new AiInsightsService();
-            aiCacheService = new AiCacheService(Database);
+            SettingsService = new SettingsService(Database);
+            AiInsightsService = new AiInsightsService(SettingsService);
+            AiCacheService = new AiCacheService(Database);
 
             this.UnhandledException += (sender, e) =>
             {
