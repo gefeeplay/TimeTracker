@@ -21,6 +21,12 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PublishSingleFile>false</PublishSingleFile> <!-- Рекомендуется false для WinUI 3 -->
   </PropertyGroup>
+
+  <PropertyGroup>
+    <Version>1.1.0</Version>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
+  </PropertyGroup>
 	
 
 <PropertyGroup>
