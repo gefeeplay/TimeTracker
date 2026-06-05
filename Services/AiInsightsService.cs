@@ -16,8 +16,6 @@ public class AiInsightsService
 {
     private readonly HttpClient _httpClient;
     private readonly SettingsService _settingsService;
-    private const string MODEL =
-        "deepseek/deepseek-v4-flash:free";
     private const string ENDPOINT =
         "https://openrouter.ai/api/v1/chat/completions";
 
@@ -38,6 +36,7 @@ public class AiInsightsService
     public async Task<string> GenerateTipsAsync(DashboardAiContext context)
     {
         var apiKey = GetApiKey();
+        var modelName = GetModelName();
 
         _httpClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", apiKey);
@@ -54,7 +53,7 @@ public class AiInsightsService
                 - Без списков
                 - Максимум 2 предложения
                 - Не придумывай данные
-                - Совет должен быть полезным"Правила:   
+                - Совет должен быть полезным   
                 Данные:
                 - Общее экранное время:  {context.TotalSecondsToday / 60.0:F1} минут
                 - Самое используемое приложение:  {context.MostFrequentApp}
@@ -66,7 +65,7 @@ public class AiInsightsService
 
             var body = new
             {
-                model = MODEL,
+                model = modelName,
                 messages = new[]
                         {
                 new
@@ -132,6 +131,13 @@ public class AiInsightsService
         return _settingsService.Get("OpenRouterApiKey")
             ?? throw new InvalidOperationException(
                 "Установите API ключ в настройках");
+    }
+
+    private string GetModelName()
+    {
+        return _settingsService.Get("ModelName")
+            ?? throw new InvalidOperationException(
+                "Модель не настроена");
     }
 
 }

@@ -57,7 +57,7 @@
                 <Border Background="White" CornerRadius="12" Padding="20" BorderBrush="#E5E5E5" BorderThickness="1">
                     <StackPanel Spacing="8">
                         <TextBlock Text="{Binding TipsTitle}" Style="{StaticResource SectionTitleTextStyle}"/>
-
+                        
                         <Grid ColumnDefinitions="Auto, *">
                             <Border Grid.Column="0"
                                     Width="32"
@@ -69,10 +69,19 @@
                                 <FontIcon Glyph="&#xea1f;" FontSize="18" Foreground="#548AC5"/>
                             </Border>
 
-                            <TextBlock Grid.Column="1" 
-                                       Text="{Binding TipsText}" 
-                                       Style="{StaticResource CaptionTextStyle}" 
-                                       TextWrapping="Wrap"/>
+                            <TextBlock Grid.Column="1"
+                                       Style="{StaticResource CaptionTextStyle}"
+                                       TextWrapping="Wrap"> 
+
+                                <Run Text="Укажите дневной лимит экранного времени, API-ключ OpenRouter и модель для генерации рекомендаций. Список доступных моделей можно посмотреть" />
+
+                                <Hyperlink NavigateUri="https://openrouter.ai/models?output_modalities=text&amp;order=pricing-low-to-high">
+                                    <Run Text="здесь."/>
+                                </Hyperlink>
+
+                                <Run Text="Бесплатные модели могут периодически становиться недоступными, поэтому рекомендуется время от времени проверять их статус." />
+
+                            </TextBlock>
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -132,6 +141,30 @@
                                              Password="{Binding ApiKey, Mode=TwoWay}" 
                                              Style="{StaticResource PrimaryPasswordBoxStyle}" />
                                 
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- Модель -->
+                        <StackPanel Spacing="8">
+
+                            <TextBlock Text="Название модели"
+                                       Style="{StaticResource SectionTitleTextStyle}" />
+
+                            <Grid ColumnDefinitions="400, *" 
+                                  VerticalAlignment="Center">
+                                <TextBlock Grid.Column="0"
+                                           Margin="0,0,10,0"
+                                           VerticalAlignment="Center" 
+                                           Text="Полное название LLM Модели для получения ответов."
+                                           Style="{StaticResource CaptionTextStyle}" />
+
+                                <TextBox Grid.Column="1"
+                                         Background="#6B7280" 
+                                         Text="{Binding ModelName, Mode=TwoWay}"
+                                         TextAlignment="Right"
+                                         HorizontalContentAlignment="Right"
+                                         Style="{StaticResource PrimaryTextBoxStyle}" />
+
                             </Grid>
                         </StackPanel>
 
