@@ -11,10 +11,12 @@ namespace TimeTracker.ViewModels;
 public class SettingsViewModel : INotifyPropertyChanged
 {
     private readonly SettingsService _settingsService;
+    private readonly AutoStartService _autoStartService;
 
     private int _dailyLimitHours;
     private string _apiKey = string.Empty;
     private bool _isAutoStartEnabled;
+    private string _modelName = string.Empty;
 
     public string HeaderTitle { get; } = "Настройки";
 
@@ -22,10 +24,6 @@ public class SettingsViewModel : INotifyPropertyChanged
         "Управление параметрами приложения";
 
     public string TipsTitle { get; } = "Настройки приложения";
-
-    public string TipsText { get; } =
-        "Здесь можно настроить дневной лимит использования, " +
-        "API ключ для AI-функций и автозапуск приложения.";
 
     public int DailyLimitHours
     {
@@ -66,13 +64,29 @@ public class SettingsViewModel : INotifyPropertyChanged
         }
     }
 
+    public string ModelName
+    {
+        get => _modelName;
+        set
+        {
+            if (_modelName != value)
+            {
+                _modelName = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public ICommand LoadCommand { get; }
 
     public ICommand SaveCommand { get; }
 
-    public SettingsViewModel(SettingsService settingsService)
+    public SettingsViewModel(
+        SettingsService settingsService,
+        AutoStartService autoStartService)
     {
         _settingsService = settingsService;
+        _autoStartService = autoStartService;
         LoadCommand = new RelayCommand(LoadSettings);
         SaveCommand = new RelayCommand(SaveSettings);
 
@@ -89,6 +103,9 @@ public class SettingsViewModel : INotifyPropertyChanged
 
         IsAutoStartEnabled =
             _settingsService.GetBool("AutoStartEnabled");
+
+        ModelName =
+            _settingsService.Get("ModelName") ?? "";
     }
 
     private void SaveSettings()
@@ -104,6 +121,19 @@ public class SettingsViewModel : INotifyPropertyChanged
         _settingsService.Set(
             "AutoStartEnabled",
             IsAutoStartEnabled.ToString());
+
+        _settingsService.Set(
+            "ModelName",
+            ModelName);
+
+        if (IsAutoStartEnabled)
+        {
+            _autoStartService.Enable();
+        }
+        else
+        {
+            _autoStartService.Disable();
+        }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

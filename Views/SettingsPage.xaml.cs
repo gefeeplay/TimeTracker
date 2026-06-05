@@ -9,7 +9,7 @@ namespace TimeTracker.Views
         public SettingsPage()
         {
             InitializeComponent();
-            ViewModel = new SettingsViewModel(App.SettingsService);
+            ViewModel = new SettingsViewModel(App.SettingsService, App.AutoStartService);
             DataContext = ViewModel;
         }
     }

@@ -16,6 +16,7 @@ namespace TimeTracker
     {
         public MainWindow? MainWindow { get; private set; }
         public static bool HandleClosedEvents { get; set; } = true;
+        public static bool IsAutoStartLaunch { get; private set; }
 
         // Статический доступ к сервисам
         public static Database Database { get; private set; } = null!;
@@ -26,6 +27,7 @@ namespace TimeTracker
         public static AiInsightsService AiInsightsService { get; private set; } = null!;
         public static AiCacheService AiCacheService { get; private set; } = null!;
         public static SettingsService SettingsService { get; private set; } = null!;
+        public static AutoStartService AutoStartService { get; private set; } = null!;
 
         public App()
         {
@@ -52,6 +54,7 @@ namespace TimeTracker
             SettingsService = new SettingsService(Database);
             AiInsightsService = new AiInsightsService(SettingsService);
             AiCacheService = new AiCacheService(Database);
+            AutoStartService = new AutoStartService();
 
             this.UnhandledException += (sender, e) =>
             {
@@ -73,10 +76,15 @@ namespace TimeTracker
 
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
+            var commandLineArgs = Environment.GetCommandLineArgs();
+
+            IsAutoStartLaunch =
+                commandLineArgs.Contains("--autostart");
+
             MainWindow = new MainWindow();
-            MainWindow.Activate();
 
             ActivityTracker.Start();
+
             MainWindow.Closed += (sender, args) =>
             {
                 if (HandleClosedEvents)
@@ -85,7 +93,15 @@ namespace TimeTracker
                     MainWindow.Hide();
                 }
             };
-            MainWindow.Activate();
+
+            if (IsAutoStartLaunch)
+            {
+                MainWindow.Hide();
+            }
+            else
+            {
+                MainWindow.Activate();
+            }
         }
     }
 }
