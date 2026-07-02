@@ -51,7 +51,7 @@ public class UsageService
         transaction.Commit();
     }
 
-    public int GetOrCreateApplication(string processName, string? exePath)
+    public int GetOrCreateApplication(string processName, string displayName, string? exePath)
     {
         using var conn = _db.CreateConnection();
 
@@ -59,9 +59,29 @@ public class UsageService
             "SELECT * FROM Applications WHERE ProcessName = @name",
             new { name = processName });
 
+        // ПРИЛОЖЕНИЕ УЖЕ ЕСТЬ, НО ИМЯ КАК ПРОЦЕСС (старая версия) → обновляем имя
+        if (app != null)
+        {
+            if (string.IsNullOrWhiteSpace(app.DisplayName)
+                || app.DisplayName == app.ProcessName)
+            {
+                conn.Execute(
+                    @"UPDATE Applications
+              SET DisplayName = @DisplayName
+              WHERE Id = @Id",
+                    new
+                    {
+                        Id = app.Id,
+                        DisplayName = displayName
+                    });
+            }
+
+            return app.Id;
+        }
+
         if (app != null)
             return app.Id;
-        
+
         // НОВОЕ ПРИЛОЖЕНИЕ → получаем иконку
         string? iconPath = null;
 
@@ -78,7 +98,7 @@ public class UsageService
             new
             {
                 ProcessName = processName,
-                DisplayName = processName,
+                DisplayName = displayName,
                 CreatedAt = DateTime.Now,
                 IconPath = iconPath
             });

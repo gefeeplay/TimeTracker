@@ -15,6 +15,7 @@ public class ActivityTracker
     private readonly Timer _timer;
 
     private string _currentProcess = string.Empty;
+    private string _currentDisplayName = string.Empty;
     private string _iconPath = string.Empty;
     private DateTime _sessionStart;
 
@@ -35,10 +36,14 @@ public class ActivityTracker
 
     public void Start()
     {
-        var (name, path) = GetActiveProcessName();
+        var app = GetActiveProcessInfo();
 
-        _currentProcess = name;
-        _iconPath = path ?? string.Empty;
+        if (app == null)
+            return;
+
+        _currentProcess = app.ProcessName;
+        _currentDisplayName = app.DisplayName;
+        _iconPath = app.ExePath ?? string.Empty;
 
         _sessionStart = DateTime.Now;
 
@@ -60,7 +65,12 @@ public class ActivityTracker
     {
         try
         {
-            var (activeProcess, exePath) = GetActiveProcessName();
+            var app = GetActiveProcessInfo();
+
+            if (app == null)
+                return;
+
+            var activeProcess = app.ProcessName;
 
             // игнор пустых значений
             if (string.IsNullOrEmpty(activeProcess))
@@ -76,8 +86,9 @@ public class ActivityTracker
             SaveSession();
 
             // начать новую
-            _currentProcess = activeProcess;
-            _iconPath = exePath ?? string.Empty;
+            _currentProcess = app.ProcessName;
+            _currentDisplayName = app.DisplayName;
+            _iconPath = app.ExePath ?? string.Empty;
             _sessionStart = DateTime.Now;
         }
         catch (Exception ex)
@@ -106,6 +117,7 @@ public class ActivityTracker
 
             int appId = _usageService.GetOrCreateApplication(
                 _currentProcess,
+                _currentDisplayName,
                 string.IsNullOrEmpty(_iconPath) ? null : _iconPath
             );
 
@@ -133,12 +145,12 @@ public class ActivityTracker
         }
     }
 
-    private (string Name, string? Path) GetActiveProcessName()
+    private ActiveApplicationInfo? GetActiveProcessInfo()
     {
         IntPtr hwnd = GetForegroundWindow();
 
         if (hwnd == IntPtr.Zero)
-            return (string.Empty, null);
+            return null;
 
         GetWindowThreadProcessId(hwnd, out uint pid);
 
@@ -146,11 +158,29 @@ public class ActivityTracker
         {
             var process = Process.GetProcessById((int)pid);
 
-            return (process.ProcessName, process.MainModule?.FileName);
+            string processName = process.ProcessName;
+            string? exePath = process.MainModule?.FileName;
+
+            string displayName = processName;
+
+            if (!string.IsNullOrEmpty(exePath))
+            {
+                var info = FileVersionInfo.GetVersionInfo(exePath);
+
+                displayName =
+                    info.FileDescription ??
+                    info.ProductName ??
+                    processName;
+            }
+
+            return new ActiveApplicationInfo(
+                processName,
+                displayName,
+                exePath);
         }
         catch
         {
-            return (string.Empty, null);
+            return null;
         }
     }
 

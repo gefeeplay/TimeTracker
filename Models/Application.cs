@@ -11,4 +11,10 @@ namespace TimeTracker.Models
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
     }
+
+    public record ActiveApplicationInfo(
+        string ProcessName,
+        string DisplayName,
+        string? ExePath
+    );
 }
