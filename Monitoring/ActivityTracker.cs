@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Timers;
@@ -14,14 +15,20 @@ public class ActivityTracker
 
     private readonly Timer _timer;
 
-    private string _currentProcess = string.Empty;
-    private string _currentDisplayName = string.Empty;
-    private string _iconPath = string.Empty;
+    private enum TrackerState
+    {
+        ActiveApp,
+        Idle
+    }
+
+    private TrackerState _state = TrackerState.ActiveApp;
+    private ActiveApplicationInfo? _currentApp;
     private DateTime _sessionStart;
 
     // настройки
     private const int IntervalMs = 2000;          // частота проверки
     private const int MinSessionSeconds = 2;      // минимальная длительность сессии
+    private const int IdleThreshold = 60;         // порог бездействия (в секундах)
 
     public event Action? OnStatsUpdated;
 
@@ -36,18 +43,15 @@ public class ActivityTracker
 
     public void Start()
     {
-        var app = GetActiveProcessInfo();
+       _currentApp = GetActiveProcessInfo();
 
-        if (app == null)
+        if (_currentApp == null)
             return;
 
-        _currentProcess = app.ProcessName;
-        _currentDisplayName = app.DisplayName;
-        _iconPath = app.ExePath ?? string.Empty;
-
+        _state = TrackerState.ActiveApp;
         _sessionStart = DateTime.Now;
 
-        Debug.WriteLine($"[Tracker] Start: {_currentProcess}");
+        Debug.WriteLine($"[Tracker] Start: {_currentApp?.ProcessName}");
 
         _timer.Start();
     }
@@ -65,30 +69,63 @@ public class ActivityTracker
     {
         try
         {
+
+            bool isIdle = IsUserIdle();
+
+            // Пользователь бездействует
+            if (isIdle)
+            {
+                if (_state == TrackerState.Idle)
+                {
+                    Debug.WriteLine("[Tracker] User still idling");
+                    return;
+                }
+                    
+                Debug.WriteLine("[Tracker] User became idle");
+
+                SaveSession();
+
+                _state = TrackerState.Idle;
+                _sessionStart = DateTime.Now;
+
+                return;
+            }
+
+            // Получаем активное приложение
             var app = GetActiveProcessInfo();
 
             if (app == null)
                 return;
 
-            var activeProcess = app.ProcessName;
+            // Пользователь вернулся к работе
+            if (_state == TrackerState.Idle)
+            {
+                Debug.WriteLine("[Tracker] User returned");
 
-            // игнор пустых значений
-            if (string.IsNullOrEmpty(activeProcess))
+                SaveSession();
+
+                _currentApp = app;
+                _state = TrackerState.ActiveApp;
+                _sessionStart = DateTime.Now;
+
+                return;
+            }
+
+            // Проверка на смену активного приложения
+            if (_currentApp == null)
                 return;
 
-            // игнор тех же процессов
-            if (activeProcess == _currentProcess)
+            if (app.ProcessName == _currentApp.ProcessName)
                 return;
 
-            Debug.WriteLine($"[Tracker] Switch: {_currentProcess} → {activeProcess}");
+            Debug.WriteLine($"[Tracker] Switch: {_currentApp.ProcessName} → {app.ProcessName}");
+
 
             // сохранить предыдущую сессию
             SaveSession();
 
             // начать новую
-            _currentProcess = app.ProcessName;
-            _currentDisplayName = app.DisplayName;
-            _iconPath = app.ExePath ?? string.Empty;
+            _currentApp = app;
             _sessionStart = DateTime.Now;
         }
         catch (Exception ex)
@@ -101,9 +138,6 @@ public class ActivityTracker
     {
         try
         {
-            if (string.IsNullOrEmpty(_currentProcess))
-                return;
-
             var endTime = DateTime.Now;
             var duration = (int)(endTime - _sessionStart).TotalSeconds;
 
@@ -111,14 +145,36 @@ public class ActivityTracker
             if (duration < MinSessionSeconds)
                 return;
 
-            // игнор системных процессов (по желанию)
-            if (IsIgnoredProcess(_currentProcess))
-                return;
+            string processName;
+            string displayName;
+            string? iconPath;
+
+            // бездействие
+            if (_state == TrackerState.Idle)
+            {
+                processName = "__IDLE__";
+                displayName = "Бездействие";
+                iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "idle.png");
+            }
+            // обычный процесс
+            else
+            {
+                if (_currentApp == null)
+                    return;
+
+                processName = _currentApp.ProcessName;
+                displayName = _currentApp.DisplayName;
+                iconPath = _currentApp.ExePath;
+
+                // игнор системных процессов 
+                if (IsIgnoredProcess(processName))
+                    return;
+            }
 
             int appId = _usageService.GetOrCreateApplication(
-                _currentProcess,
-                _currentDisplayName,
-                string.IsNullOrEmpty(_iconPath) ? null : _iconPath
+                processName,
+                displayName,
+                iconPath
             );
 
             var session = new UsageSession
@@ -132,12 +188,9 @@ public class ActivityTracker
 
             _usageService.AddSession(session);
 
-            //Обновление есть в UsageSession.AddSession
-            //_statisticsService.RecalculateDailyStats(DateTime.Today);
-
             OnStatsUpdated?.Invoke(); // уведомляем UI
 
-            Debug.WriteLine($"[Tracker] Saved: {_currentProcess} ({duration}s)");
+            Debug.WriteLine($"[Tracker] Saved: {displayName} ({duration}s)");
         }
         catch (Exception ex)
         {
@@ -203,6 +256,35 @@ public class ActivityTracker
         return false;
     }
 
+    // получение времени бездействия пользователя
+    private TimeSpan GetIdleTime()
+    {
+        LASTINPUTINFO info = new()
+        {
+            cbSize = (uint)Marshal.SizeOf<LASTINPUTINFO>()
+        };
+
+        if (!GetLastInputInfo(ref info))
+            return TimeSpan.Zero;
+
+        uint idle = unchecked((uint)Environment.TickCount) - info.dwTime;
+
+        return TimeSpan.FromMilliseconds(idle);
+    }
+
+    // проверка бездействия пользователя
+    private bool IsUserIdle()
+    {
+        return GetIdleTime().TotalSeconds >= IdleThreshold;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct LASTINPUTINFO
+    {
+        public uint cbSize;
+        public uint dwTime;
+    }
+
     #region Win32
 
     [DllImport("user32.dll")]
@@ -210,6 +292,9 @@ public class ActivityTracker
 
     [DllImport("user32.dll")]
     private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+
+    [DllImport("user32.dll")]
+    private static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
 
     #endregion
 }

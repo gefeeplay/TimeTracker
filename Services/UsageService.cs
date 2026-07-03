@@ -85,7 +85,11 @@ public class UsageService
         // НОВОЕ ПРИЛОЖЕНИЕ → получаем иконку
         string? iconPath = null;
 
-        if (!string.IsNullOrEmpty(exePath))
+        // для "Бездействие" - exePath = iconPath (уникальный путь)
+        if (displayName == "Бездействие")
+            iconPath = exePath;
+
+        if (!string.IsNullOrEmpty(exePath) && displayName != "Бездействие")
         {
             iconPath = IconHelper.SaveIconToFile(exePath, processName);
         }
